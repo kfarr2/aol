@@ -18,6 +18,15 @@ $(document).ready(function(){
         $('.info-panel-panel').hide();
         $('#info-panel-search').show();
     });
+
+    $('#map').on("featureselected", function(e, extras){
+        var feature = extras.feature;
+        var attrs = feature.attributes;
+        $.get('/maps/panel/' + attrs.id, function(html){
+            $('.info-panel-panel').hide();
+            $('#info-panel-lake').html(html).show();
+        });
+    });
 });
 </script>
 
@@ -25,10 +34,16 @@ $(document).ready(function(){
 <div id="info-panel">
     <a href="#" id="info-panel-legend-button">Legend</a>
     <a href="#" id="info-panel-search-button">Search</a>
+
+    <div id="info-panel-lake" class="info-panel-panel">
+        
+    </div>
+
     <div id="info-panel-search" class="info-panel-panel">
         <input type="text" value="" />
         <input type="submit" value="Submit" />
     </div>
+
     <div id="info-panel-legend" class="info-panel-panel">
         <table>
             <tr>

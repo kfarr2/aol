@@ -17,6 +17,7 @@ $(document).ready(function(){
     // create the map, add the layers, and zoom to the initial location
     var map = new OpenLayers.Map('map', map_options);
     map.addLayer(layers.base);
+    map.addLayer(layers.facilities_kml);
     map.addLayer(layers.lakes_kml);
     map.zoomToMaxExtent();
     map.setCenter(new OpenLayers.LonLat(1294408, 865759), 0);
@@ -27,12 +28,21 @@ $(document).ready(function(){
         layers.lakes_kml.protocol.params.scale = Math.round(this.getScale());
         layers.lakes_kml.protocol.params.bbox_limited = this.getExtent().toBBOX();
         layers.lakes_kml.redraw(true);
+
+        layers.facilities_kml.protocol.params.scale = Math.round(this.getScale());
+        layers.facilities_kml.protocol.params.bbox_limited = this.getExtent().toBBOX();
+        layers.facilities_kml.redraw(true);
+        map.setLayerIndex(layers.facilities_kml, 99);
     })
+
+    layers.lakes_kml.events.register("featureselected", layers.lakes_kml_layer, function(evt){
+        var feature = this.selectedFeatures[0];
+        $('#map').trigger('featureselected', {feature: feature});
+    });
 
     // make the KML layers clickable
     var control = new OpenLayers.Control.SelectFeature([layers.lakes_kml])
     map.addControl(control)
     control.activate()
-
 });
 

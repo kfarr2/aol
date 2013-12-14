@@ -316,6 +316,7 @@ class County(models.Model):
     def __unicode__(self):
         return self.full_name
 
+
 class Plant(models.Model):
     plant_id = models.AutoField(primary_key=True) # Primary key for a plant row
     name = models.CharField(max_length=255) # Scientific name of a plant
@@ -328,3 +329,47 @@ class Plant(models.Model):
     
     def __unicode__(self):
         return self.name
+
+
+class FacilityManager(models.Manager):
+    def to_kml(self, bbox):
+        return Facility.objects.all().extra(
+            select={'kml': 'st_askml(the_geom)'},
+            where=[
+                "the_geom && st_setsrid(st_makebox2d(st_point(%s, %s), st_point(%s, %s)), 3644)",
+            ],
+            params=bbox
+        )
+
+
+class Facility(models.Model):
+    facility_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=254, db_column="facilityna")
+    waterbody = models.CharField(max_length=254)
+    islake = models.IntegerField()
+    type = models.CharField(max_length=254)
+    telephone = models.CharField(max_length=254) 
+    ramp_type = models.CharField(max_length=254, db_column="ramp_type_")
+    moorage = models.CharField(max_length=254) 
+    trailer_park = models.CharField(max_length=254, db_column="trailer_pa")
+    transient = models.CharField(max_length=254)
+    launch_fee = models.CharField(max_length=254)
+    restroom = models.CharField(max_length=254)
+    supplies = models.CharField(max_length=254)
+    gas_on_water = models.CharField(max_length=254, db_column="gas_on_the")
+    diesel_on_water = models.CharField(max_length=254, db_column="diesel_on") 
+    fish_cleaning = models.CharField(max_length=254, db_column="fish_clean")
+    pumpout = models.CharField(max_length=254)
+    dump_station = models.CharField(max_length=254, db_column="dump_stati")
+    managed_by = models.CharField(max_length=254)
+    latitude = models.FloatField() 
+    longitude = models.FloatField()
+    boater_ser = models.CharField(max_length=254)
+    icon_url = models.CharField(max_length=254)
+    the_geom = models.PointField(srid=3644)
+
+    lake = models.ForeignKey("Lake")
+    objects = FacilityManager()
+
+    class Meta:
+        db_table = "facility"

@@ -5,7 +5,7 @@ from aol.lakes import views as lakes
 from aol.home import views as home
 from aol.maps import views as maps
 from aol.users import views as customadmin
-#from .views import mussels
+from .views import mussels
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
@@ -15,12 +15,17 @@ urlpatterns = patterns('',
     url(r'^$', home.home, name='home'),
     url(r'^about/?$', home.about, name='about'),
     url(r'^credits/?$', home.credits, name='credits'),
-    url(r'^lakes/?$', lakes.listing, name='lakes-listing'),
-    url(r'^lakes/(?P<reachcode>\d+)?$', lakes.detail, name='lakes-detail'),
-    url(r'^map/?$', maps.home, name='map'),
-    url(r'^map/lakes\.kml$', maps.lakes, name='lakes-kml'),
 	url(r'^search/?$', lakes.search, name='lakes-search'),
     url(r'^photo-submissions/?$', home.photo_submissions, name='photo-submissions'),
+
+    url(r'^lakes/?$', lakes.listing, name='lakes-listing'),
+    url(r'^lakes/(?P<reachcode>\d+)?$', lakes.detail, name='lakes-detail'),
+
+    url(r'^map/?$', maps.home, name='map'),
+    url(r'^map/lakes\.kml$', maps.lakes, name='lakes-kml'),
+    url(r'^map/facilities\.kml$', maps.facilities, name='facilities-kml'),
+    url(r'^maps/panel/(?P<reachcode>\d+)?$', maps.panel, name='lakes-panel'),
+
 
     # admin area
     url(r'^admin/?$', customadmin.listing, name='admin-listing'),
@@ -36,7 +41,7 @@ urlpatterns = patterns('',
     url(r'^admin/logout/$', 'djangocas.views.logout', name='admin-logout', kwargs={"next_page": "/"}),
 
     # mussels
-    #url(r'^mussels/?$', mussels.merge, name='mussels-merge'),
+    url(r'^mussels/?$', mussels.merge, name='mussels-merge'),
     
     # Examples:
     # url(r'^$', 'aol.views.home', name='home'),

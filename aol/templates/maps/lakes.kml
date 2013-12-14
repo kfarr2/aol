@@ -5,7 +5,7 @@
         <Style id="lake">
             <LineStyle>
                 <color>ffffffff</color>
-                <width>10</width>
+                <width>1</width>
             </LineStyle>
             <PolyStyle>
                 <color>00ffffff</color>
@@ -16,7 +16,7 @@
             <name>lakes</name>
             {% for lake in lakes %}
                 <Placemark>
-                    <id></id>
+                    <id>{{ lake.reachcode }}</id>
                     <name>{{ lake.title }}</name>
                     <description><![CDATA[ {% if lake.page_number %}<a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">Page</a>{% endif %} ]]></description>
                     <styleUrl>#lake</styleUrl>

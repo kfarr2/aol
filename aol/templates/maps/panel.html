@@ -1,0 +1,7 @@
+<h2>{{ lake.title }} <em>({{ lake.counties }})</em></h2>
+
+{{ lake.body|safe }}
+
+{% if lake.page_number %}
+    <a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">Page</a>
+{% endif %}

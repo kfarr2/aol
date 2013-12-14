@@ -38,7 +38,7 @@ var layers = (function(){
         projection: new OpenLayers.Projection("EPSG:4326"),
         strategies: [new OpenLayers.Strategy.BBOX({resFactor: 1})],
         protocol: new OpenLayers.Protocol.HTTP({
-            url: 'map/lakes.kml',
+            url: '/map/lakes.kml',
             params: {},
             format: new OpenLayers.Format.KML({
                 extractStyles: true,
@@ -62,28 +62,31 @@ var layers = (function(){
         this.minScale = OpenLayers.Util.getScaleFromResolution(this.maxResolution, this.units);
     };
 
-    lakes_kml_layer.events.register("featureselected", lakes_kml_layer, function(evt){
-        // FYI a global `event` object magically is accessible in this function
-        // somehow
-        var feature = this.selectedFeatures[0];
-        var attrs = feature.attributes;
-        var html = "<h2>" + attrs.name + "</h2>" + "<div>" + attrs.description + "</div>";
 
-        var popup = new OpenLayers.Popup.FramedCloud(
-            "foobar", 
-            this.map.getLonLatFromViewPortPx(event.xy),
-            new OpenLayers.Size(450, 150), 
-            html, 
-            null, 
-            true, 
-            function(){
-                this.destroy()
-            }
-        );
-
-        this.map.addPopup(popup)
+    // layer for drawing the lake outlines
+    var facilities_kml_layer = new OpenLayers.Layer.Vector("KML", {
+        projection: new OpenLayers.Projection("EPSG:4326"),
+        strategies: [new OpenLayers.Strategy.BBOX({resFactor: 1})],
+        protocol: new OpenLayers.Protocol.HTTP({
+            url: '/map/facilities.kml',
+            params: {},
+            format: new OpenLayers.Format.KML({
+                extractStyles: true,
+                extractAttributes: true,
+                maxDepth: 16
+            })
+        }),
+        styleMap: new OpenLayers.StyleMap({
+            default: new OpenLayers.Style(),
+            select: new OpenLayers.Style(),
+        }),
+        minScale: 54001,
+        maxScale: 1
     });
 
+    // don't have a clue why this is needed. Pulled out and simplified from the old AOL code
+    facilities_kml_layer.initResolutions = lakes_kml_layer.initResolutions
+
     // return all the layers with friendly names
-    return {base: base_layer, lakes_kml: lakes_kml_layer}
+    return {base: base_layer, lakes_kml: lakes_kml_layer, facilities_kml: facilities_kml_layer}
 })()

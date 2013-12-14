@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<kml xmlns='http://www.opengis.net/kml/2.2'>
+<Document id='facilities'>
+  <name>lakes</name>
+  <Style id="facility">
+    <IconStyle>
+      <Icon>
+        <href>{{ STATIC_URL }}img/ombf_icons/boat_launch.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Snippet></Snippet>
+  <Folder id='FeatureLayer0'>
+    <name>facilities</name>
+    {% for row in rows %}
+        <Placemark>
+            <id></id>
+            <name>{{ row.name }}</name>
+            <description>
+                <div class='facility-info'>Managed by {{ row.managed_by }}<br />
+                <b>Telephone:</b> {{ row.telephone }} <br />
+                <b>Ramp Type:</b> {{ row.ramp_type }}<br />
+                <b>Trailer Parking:</b> {{ row.trailer_parking }} <br />
+                <b>Moorage:</b> {{ row.moorage }} <br />
+                <b>Launch Fee:</b> {{ row.launch_fee }}<br />
+                {% if row.restroom == 'yes' %}
+                    <div><img src='{{ STATIC_URL }}img/ombf_icons/public_restroom_small.png' valign='middle' />Public Restrooms</div>
+                {% endif %}
+                {% if row.supplies == 'yes' %}
+                    <div><img src='{{ STATIC_URL }}img/ombf_icons/supplies_small.png' valign='middle' />Supplies</div>
+                {% endif %}
+                {% if row.gas_on_water == 'yes' %}
+                    <div><img src='{{ STATIC_URL }}img/ombf_icons/gas_on_water_small.png' valign='middle' />Gas on Water</div>
+                {% endif %}
+                {% if row.diesel_on_water == 'yes' %}
+                    <div><img src='{{ STATIC_URL }}img/ombf_icons/diesel_on_water_small.png' valign='middle' />Diesel on Water</div>
+                {% endif %}
+                {% if row.fish_cleaning == 'yes' %}
+                    <div><img src='{{ STATIC_URL }}img/ombf_icons/fish_cleaning_station_small.png' valign='middle' />Fish Cleaning Station</div>
+                {% endif %}
+                {% if row.pumpout == 'yes' %}
+                    <div><img src='{{ STATIC_URL }}img/ombf_icons/pumpout_small.png' valign='middle' />Holding Tank Pumpout / Potty Dump</div>
+                {% endif %}
+                {% if row.dump_station == 'yes' %}
+                    <div><img src='{{ STATIC_URL }}img/ombf_icons/dump_station_small.png' valign='middle' />Waste Oil Tanks</div>
+                {% endif %}
+                </div>
+            </description>';
+            <styleUrl>#facility</styleUrl>
+            {{ row.kml|safe }}
+        </Placemark>
+    {% endfor %}
+
