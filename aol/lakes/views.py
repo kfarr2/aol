@@ -17,10 +17,12 @@ def detail(request, reachcode):
     lake = get_object_or_404(Lake, reachcode=reachcode)
     photos = Photo.objects.filter(lake=lake)
     documents = Document.objects.filter(lake=lake)
+    plants = lake.plants.all()
     return render(request, "lakes/detail.html", {
         "lake": lake,
         "photos": photos,
         "documents": documents,
+        "plants": plants,
     })
 
 def search(request):

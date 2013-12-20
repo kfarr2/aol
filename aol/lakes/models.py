@@ -321,7 +321,6 @@ class Plant(models.Model):
     name = models.CharField(max_length=255) # Scientific name of a plant
     common_name = models.CharField(max_length=255) # Common name of the plant
     former_name = models.CharField(max_length=255) # Former name of the plant
-    reachcode = models.CharField(max_length=255, unique=True) # This is reachcode of the lake that the plant lives in
     plant_family = models.CharField(max_length=255) # The family name that the plant belongs to
 
     class Meta:

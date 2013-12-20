@@ -104,7 +104,33 @@ def  add_plant(request):
     if request.POST:
         form = PlantForm(request.POST)
         if form.is_valid():
-            form.show()
+            for line in form.cleaned_data['user_input'].split('\n'):
+                attributes = line.split('\t')
+                reach_code = attributes[0]
+                name = attributes[1]
+                common_name = attributes[2]
+                plant_family = attributes[3]
+                former_name = attributes[4]
+
+                # print "%s - %s - %s - %s - %s " % (reach_code, name, common_name, plant_family, former_name)
+                # If reach_code is not empty, look up the lake using reachcode
+                if reach_code:
+                    lakes = Lake.objects.filter(reachcode=reach_code)
+                    
+                    # If lakes is not empty, then look for exist plant in database
+                    # or create new plant information from user input
+                    if lakes:
+                        try:
+                            plant = Plant.objects.get(name=name)
+                        except Plant.DoesNotExist:
+                            plant = Plant(name=name, common_name=common_name, former_name=former_name, plant_family=plant_family)
+                            plant.save()
+
+                        # Add this plant to the lake where it should belong to
+                        for lake in lakes:
+                            lake.plants.add(plant)
+
+
             messages.success(request, " Plants information is saved ")
             return HttpResponseRedirect(reverse("admin-add-plant"))
     else:

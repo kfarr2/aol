@@ -6,11 +6,12 @@
         <div class="lake-body">
 		    {{ lake.body|safe }}
 	    </div>
-    </div>
+        
     <div class='lake-right span4 right'>
         <div class'tab-wrap'>
             <ul class='tabs'>
                 <li class='active'><a class='tabs' title='maps' href='#maps'>Maps</a></li>
+                <li><a class='tabs' title='plants' href='#plants'>Plants</a></li>
                 <li><a class='tabs' title='other-information' href='#other-information'>Other Information</a></li>
                 <li><a class='tabs' title='photos' href='#photos'>Photos</a></li>
             </ul>
@@ -31,6 +32,17 @@
                 <option value='#watershed'>Watershed</option>
                 <option value='#basin'>Basin</option>
             </select>
+        </div>
+        <div class="plants aside" id='plants'>
+        {% if plants %}
+            <ul>
+            {% for plant in plants %}
+                <li>{{ plant.name }} ({{ plant.common_name }})</li>
+            {% endfor %}
+            </ul>
+        {% else %}  
+            <p> No plants are available. </p>
+        {% endif %}
         </div>
         <div class='other-information aside' id='other-information'>
         {% if documents %}
