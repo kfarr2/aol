@@ -81,9 +81,12 @@ class PlantForm(forms.Form):
         cleaned_data = super(PlantForm, self).clean()
         data = cleaned_data.get("user_input").split('\n')
 
+        # Create a list of plant infomation output
         output = []
         line_no = 0
         for line in data:
+
+            # Each plant_info is a dictionary
             plant_info = {}
             line_no = line_no + 1
             attributes = line.split('\t')
