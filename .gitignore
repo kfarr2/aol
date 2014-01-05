@@ -5,3 +5,4 @@ aol/settings/local.py
 .env
 media/*
 *.sql
+plant_data.txt

@@ -104,13 +104,14 @@ def  add_plant(request):
     if request.POST:
         form = PlantForm(request.POST)
         if form.is_valid():
-            for line in form.cleaned_data['user_input'].split('\n'):
-                attributes = line.split('\t')
-                reach_code = attributes[0]
-                name = attributes[1]
-                common_name = attributes[2]
-                plant_family = attributes[3]
-                former_name = attributes[4]
+            for line in form.cleaned_data:
+                
+                # Get attribute values at each line
+                reach_code = line['reachcode']
+                name = line['name']
+                common_name = line['common_name']
+                plant_family = line['plant_family']
+                former_name = line['former_name']
 
                 # print "%s - %s - %s - %s - %s " % (reach_code, name, common_name, plant_family, former_name)
                 # If reach_code is not empty, look up the lake using reachcode
@@ -129,7 +130,6 @@ def  add_plant(request):
                         # Add this plant to the lake where it should belong to
                         for lake in lakes:
                             lake.plants.add(plant)
-
 
             messages.success(request, " Plants information is saved ")
             return HttpResponseRedirect(reverse("admin-add-plant"))

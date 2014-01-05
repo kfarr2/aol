@@ -1,5 +1,6 @@
 from django import forms
 from aol.lakes.models import Document, Lake, LakeCounty, Photo, Plant
+from django.utils.translation import ugettext as _
 
 class LakeForm(forms.ModelForm):
     def save(self, *args, **kwargs):
@@ -72,7 +73,34 @@ class PhotoForm(DeletableModelForm):
             'taken_on',
         )
 
+
 class PlantForm(forms.Form):
     user_input = forms.CharField(widget=forms.Textarea)
 
+    def clean(self):
+        cleaned_data = super(PlantForm, self).clean()
+        data = cleaned_data.get("user_input").split('\n')
 
+        output = []
+        line_no = 0
+        for line in data:
+            plant_info = {}
+            line_no = line_no + 1
+            attributes = line.split('\t')
+
+            # Check if there are enough attributes
+            # Each line should have 5 attributes, which are separated by tab
+            if len(attributes) != 5:
+                raise forms.ValidationError(_('Not enough attributes: Line %d is missing attributes') % line_no)
+            # Check if reachcode is available
+            elif len(attributes[0]) is 0:
+                raise forms.ValidationError(_('Missing reachcode: Line %d need to have a reachcode at the beginning of the line') % line_no)
+            else:
+                plant_info['reachcode'] = attributes[0]
+                plant_info['name'] = attributes[1]
+                plant_info['common_name'] = attributes[2]
+                plant_info['plant_family'] = attributes[3]
+                plant_info['former_name'] = attributes[4]
+
+                output.append(plant_info)
+        return output
