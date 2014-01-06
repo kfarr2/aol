@@ -93,17 +93,24 @@ class PlantForm(forms.Form):
 
             # Check if there are enough attributes
             # Each line should have 5 attributes, which are separated by tab
-            if len(attributes) != 5:
-                raise forms.ValidationError(_('Not enough attributes: Line %d is missing attributes') % line_no)
-            # Check if reachcode is available
-            elif len(attributes[0]) is 0:
-                raise forms.ValidationError(_('Missing reachcode: Line %d need to have a reachcode at the beginning of the line') % line_no)
-            else:
-                plant_info['reachcode'] = attributes[0]
-                plant_info['name'] = attributes[1]
-                plant_info['common_name'] = attributes[2]
-                plant_info['plant_family'] = attributes[3]
-                plant_info['former_name'] = attributes[4]
+            if len(attributes) < 5:
+                raise forms.ValidationError(_('Missing attributes: Line %d should have 5 attributes separated by 4 tabs. \n Make sure you have 4 tabs separated 5 attributes') % line_no)
+            # Check if reachcode is available and should not be the header
+            elif attributes[0] and attributes[0] != 'ReachCode':
+                lakes = Lake.objects.filter(reachcode=attributes[0])
 
-                output.append(plant_info)
+                # Check if that reachcode is corresponding to a lake or a list of lakes
+                if lakes:
+                    plant_info['reachcode'] = attributes[0]
+                    plant_info['name'] = attributes[1]
+                    plant_info['common_name'] = attributes[2]
+                    plant_info['plant_family'] = attributes[3]
+                    plant_info['former_name'] = attributes[4]
+
+                    output.append(plant_info)
+                # Now it means the reachcode is invalid
+                else:
+                    raise forms.ValidationError(_('Invalid reachcode: Reachcode no. %s is invalid in line %d. \n Erase the line or provide a valid reachcode to continue processing.') % (attributes[0], line_no))
+
+                
         return output

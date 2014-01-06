@@ -1,5 +1,10 @@
 {% extends "main.html" %}
 {% block content %}
+<div class='wrap'>
+	<h2>Plant Information</h2>
+	<a href="{% url 'admin-add-plant' %}">Add</a>
+</div>
+
 <div class= 'wrap' >
 	<h2>Individual Lake Pages</h2>
 	<ul class='wrap'>
@@ -8,9 +13,4 @@
 		{% endfor %}
 	</ul>
 </div>
-
-<aside>
-	<h3>Plant Information</h3>
-	<a href="{% url 'admin-add-plant' %}">Add</a>
-</aside>
 {% endblock %}

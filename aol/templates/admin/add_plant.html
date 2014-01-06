@@ -1,5 +1,12 @@
 {% extends "main.html" %}
 {% block content %}
+<script type="text/javascript" src="{{ STATIC_URL }}/js/jquery-linedtextarea/jquery-linedtextarea.js"></script>
+<script>
+$(function() {
+	$("#id_user_input").linedtextarea() 
+});
+</script>
+
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ form }}
