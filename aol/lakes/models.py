@@ -11,6 +11,42 @@ from PIL import Image
 _quote_name_unless_alias = SQLCompiler.quote_name_unless_alias
 SQLCompiler.quote_name_unless_alias = lambda self, name: name if name.strip().startswith('(') else _quote_name_unless_alias(self, name)
 
+class NHDLake(models.Model):
+    reachcode = models.CharField(max_length=32, primary_key=True)
+    permanent_id = models.CharField(max_length=64)
+    fdate = models.DateField()
+    ftype = models.IntegerField()
+    fcode = models.IntegerField()
+    shape_length = models.FloatField()
+    shape_area = models.FloatField()
+    resolution = models.IntegerField()
+    gnis_id = models.CharField(max_length=32)
+    gnis_name = models.CharField(max_length=255)
+    area_sq_km = models.FloatField()
+    elevation = models.FloatField()
+    parent = models.ForeignKey('self', null=True, db_column="parent")
+    aol_page = models.IntegerField(null=True)
+    body = models.TextField()
+
+    class Meta:
+        db_table = 'nhd'
+
+
+class LakeGeom(models.Model):
+    reachcode = models.CharField(max_length=32, primary_key=True)
+    the_geom = models.MultiPolygonField(srid=3644)
+    the_geom_866k = models.MultiPolygonField(srid=3644)
+    the_geom_217k = models.MultiPolygonField(srid=3644)
+    the_geom_108k = models.MultiPolygonField(srid=3644)
+    the_geom_54k = models.MultiPolygonField(srid=3644)
+    the_geom_27k = models.MultiPolygonField(srid=3644)
+
+    objects = models.GeoManager()
+
+    class Meta:
+        db_table = "nhd"
+
+
 class LakeManager(models.Manager):
     def get_query_set(self, *args, **kwargs):
         """
@@ -173,17 +209,17 @@ class Lake(models.Model):
         return SETTINGS.TILE_URL + (path % bbox)
 
 
-class LakeGeom(models.Model):
-    lake = models.ForeignKey('Lake', primary_key=True)
-    the_geom = models.MultiPolygonField(srid=3644)
-    the_geom_866k = models.MultiPolygonField(srid=3644)
-    the_geom_217k = models.MultiPolygonField(srid=3644)
-    the_geom_108k = models.MultiPolygonField(srid=3644)
-    the_geom_54k = models.MultiPolygonField(srid=3644)
-    the_geom_27k = models.MultiPolygonField(srid=3644)
-
-    class Meta:
-        db_table = "lake_geom"
+#class LakeGeom(models.Model):
+#    lake = models.ForeignKey('Lake', primary_key=True)
+#    the_geom = models.MultiPolygonField(srid=3644)
+#    the_geom_866k = models.MultiPolygonField(srid=3644)
+#    the_geom_217k = models.MultiPolygonField(srid=3644)
+#    the_geom_108k = models.MultiPolygonField(srid=3644)
+#    the_geom_54k = models.MultiPolygonField(srid=3644)
+#    the_geom_27k = models.MultiPolygonField(srid=3644)
+#
+#    class Meta:
+#        db_table = "lake_geom"
 
 
 class LakeCounty(models.Model):
