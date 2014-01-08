@@ -19,12 +19,12 @@ urlpatterns = patterns('',
     url(r'^photo-submissions/?$', home.photo_submissions, name='photo-submissions'),
 
     url(r'^lakes/?$', lakes.listing, name='lakes-listing'),
-    url(r'^lakes/(?P<reachcode>\d+)?$', lakes.detail, name='lakes-detail'),
+    url(r'^lakes/(?P<reachcode>.+)?$', lakes.detail, name='lakes-detail'),
 
     url(r'^map/?$', maps.home, name='map'),
     url(r'^map/lakes\.kml$', maps.lakes, name='lakes-kml'),
     url(r'^map/facilities\.kml$', maps.facilities, name='facilities-kml'),
-    url(r'^maps/panel/(?P<reachcode>\d+)?$', maps.panel, name='lakes-panel'),
+    url(r'^maps/panel/(?P<reachcode>.+)?$', maps.panel, name='lakes-panel'),
 
 
     # admin area

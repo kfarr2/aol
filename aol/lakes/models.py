@@ -11,68 +11,32 @@ from PIL import Image
 _quote_name_unless_alias = SQLCompiler.quote_name_unless_alias
 SQLCompiler.quote_name_unless_alias = lambda self, name: name if name.strip().startswith('(') else _quote_name_unless_alias(self, name)
 
-class NHDLake(models.Model):
-    reachcode = models.CharField(max_length=32, primary_key=True)
-    permanent_id = models.CharField(max_length=64)
-    fdate = models.DateField()
-    ftype = models.IntegerField()
-    fcode = models.IntegerField()
-    shape_length = models.FloatField()
-    shape_area = models.FloatField()
-    resolution = models.IntegerField()
-    gnis_id = models.CharField(max_length=32)
-    gnis_name = models.CharField(max_length=255)
-    area_sq_km = models.FloatField()
-    elevation = models.FloatField()
-    parent = models.ForeignKey('self', null=True, db_column="parent")
-    aol_page = models.IntegerField(null=True)
-    body = models.TextField()
-
-    class Meta:
-        db_table = 'nhd'
-
-
-class LakeGeom(models.Model):
-    reachcode = models.CharField(max_length=32, primary_key=True)
-    the_geom = models.MultiPolygonField(srid=3644)
-    the_geom_866k = models.MultiPolygonField(srid=3644)
-    the_geom_217k = models.MultiPolygonField(srid=3644)
-    the_geom_108k = models.MultiPolygonField(srid=3644)
-    the_geom_54k = models.MultiPolygonField(srid=3644)
-    the_geom_27k = models.MultiPolygonField(srid=3644)
-
-    objects = models.GeoManager()
-
-    class Meta:
-        db_table = "nhd"
-
-
-class LakeManager(models.Manager):
+class NHDLakeManager(models.Manager):
     def get_query_set(self, *args, **kwargs):
         """
         Override the default query_set for lakes so that the fishing_zone
         and a commas separated list of counties are always attached to the Lake
         object.
         """
-        qs = super(LakeManager, self).get_query_set(*args, **kwargs).defer("fishing_zone__the_geom")
+        qs = super(NHDLakeManager, self).get_query_set(*args, **kwargs).defer("fishing_zone__the_geom").filter(parent=None)
         # always tack on the fishing zone
-        qs = qs.select_related("fishing_zone")
+        #qs = qs.select_related("fishing_zone")
         # we want to get a list of the counties each lake belongs to without
         # multiple round-trips to the DB, or Django's stupid prefetch_related
         # method. We build a little subquery, and cleverly tack it onto the
         # queryset. 
         sql = """
         (SELECT 
-            lake_county.lake_id, 
+            lake_county.reachcode, 
             array_to_string(array_agg(county.altname ORDER BY county.altname), ', ') AS counties
         FROM lake_county INNER JOIN county USING(county_id)
-        GROUP BY lake_county.lake_id
+        GROUP BY lake_county.reachcode
         ) counties
         """
         qs = qs.extra(
             select={"counties": "counties.counties"},
             tables=[sql],
-            where=["counties.lake_id = lake.lake_id"]
+            where=["counties.reachcode = nhd.reachcode"]
         )
         return qs
 
@@ -93,47 +57,46 @@ class LakeManager(models.Manager):
         else:
             raise ValueError("scale not valid")
 
-        # join with the lake_geom table
-        sql = """
-            (SELECT st_askml(lake_geom.%s) as kml, lake_geom.the_geom, lake_id
-            FROM lake_geom) AS lake_geom
-        """ % (geom_col)
-
         return Lake.objects.all().extra(
             tables=[sql],
-            select={'kml': 'lake_geom.kml'},
+            select={'kml': 'st_askml(lake_geom.%s)' % (geom_col)},
             where=[
-                "lake_geom.the_geom && st_setsrid(st_makebox2d(st_point(%s, %s), st_point(%s, %s)), 3644)",
-                "lake_geom.lake_id = lake.lake_id"
+                "nhd.the_geom && st_setsrid(st_makebox2d(st_point(%s, %s), st_point(%s, %s)), 3644)",
             ],
             params=bbox
         )
 
-
-class Lake(models.Model):
-    lake_id = models.AutoField(primary_key=True)
+class NHDLake(models.Model):
+    reachcode = models.CharField(max_length=32, primary_key=True)
     title = models.CharField(max_length=255)
-    body = models.TextField()
-
-    gnis_id = models.CharField(max_length=255)
+    permanent_id = models.CharField(max_length=64)
+    fdate = models.DateField()
+    ftype = models.IntegerField()
+    fcode = models.IntegerField()
+    shape_length = models.FloatField()
+    shape_area = models.FloatField()
+    resolution = models.IntegerField()
+    gnis_id = models.CharField(max_length=32)
     gnis_name = models.CharField(max_length=255)
-    reachcode = models.CharField(max_length=255, unique=True)
-
-    # Plant in the lake
-    plants = models.ManyToManyField('Plant')
-
-    # the page number of this lake in the original AOL book
-    page_number = models.IntegerField(db_column="aol_page")
+    area_sq_km = models.FloatField()
+    elevation = models.FloatField()
+    parent = models.ForeignKey('self', null=True, db_column="parent")
+    aol_page = models.IntegerField(null=True)
+    body = models.TextField()
 
     fishing_zone = models.ForeignKey('FishingZone', null=True)
     huc6 = models.ForeignKey('HUC6', null=True)
     county_set = models.ManyToManyField('County', through="LakeCounty")
+    plants = models.ManyToManyField('Plant', through="LakePlant")
 
-    objects = LakeManager()
+    objects = NHDLakeManager()
+    unfiltered = models.Manager()
 
     class Meta:
-        db_table = 'lake'
-        ordering = ['title']
+        db_table = 'nhd'
+
+    def __unicode__(self):
+        return self.title or self.gnis_name or self.pk
 
     @property
     def page_urls(self):
@@ -188,10 +151,10 @@ class Lake(models.Model):
         Return the URL to the lakebasin tile thumbnail from the arcgis server
         """
         # the magic 1000 here is from the original AOL too 
-        results = Lake.objects.raw("""
-        SELECT st_box2d(st_envelope(st_expand(the_geom,1000))) as bbox, lake_id
-        FROM lake_geom where lake_id = %s
-        """, (self.lake_id,))
+        results = NHDLake.objects.raw("""
+        SELECT st_box2d(st_envelope(st_expand(the_geom,1000))) as bbox, reachcode
+        FROM nhd where reachcode = %s
+        """, (self.pk,))
 
         bbox = results[0].bbox
         return self._bbox_thumbnail_url(bbox)
@@ -209,22 +172,24 @@ class Lake(models.Model):
         return SETTINGS.TILE_URL + (path % bbox)
 
 
-#class LakeGeom(models.Model):
-#    lake = models.ForeignKey('Lake', primary_key=True)
-#    the_geom = models.MultiPolygonField(srid=3644)
-#    the_geom_866k = models.MultiPolygonField(srid=3644)
-#    the_geom_217k = models.MultiPolygonField(srid=3644)
-#    the_geom_108k = models.MultiPolygonField(srid=3644)
-#    the_geom_54k = models.MultiPolygonField(srid=3644)
-#    the_geom_27k = models.MultiPolygonField(srid=3644)
-#
-#    class Meta:
-#        db_table = "lake_geom"
+class LakeGeom(models.Model):
+    reachcode = models.CharField(max_length=32, primary_key=True)
+    the_geom = models.MultiPolygonField(srid=3644)
+    the_geom_866k = models.MultiPolygonField(srid=3644)
+    the_geom_217k = models.MultiPolygonField(srid=3644)
+    the_geom_108k = models.MultiPolygonField(srid=3644)
+    the_geom_54k = models.MultiPolygonField(srid=3644)
+    the_geom_27k = models.MultiPolygonField(srid=3644)
+
+    objects = models.GeoManager()
+
+    class Meta:
+        db_table = "nhd"
 
 
 class LakeCounty(models.Model):
     lake_county_id = models.AutoField(primary_key=True)
-    lake = models.ForeignKey("Lake")
+    lake = models.ForeignKey(NHDLake, db_column="reachcode")
     county = models.ForeignKey("County")
 
     class Meta:
@@ -244,7 +209,7 @@ class Document(models.Model):
     rank = models.IntegerField(help_text="The order this field is displayed on the lakes detail page")
     uploaded_on = models.DateTimeField(auto_now_add=True)
 
-    lake = models.ForeignKey('Lake')
+    lake = models.ForeignKey(NHDLake, db_column="reachcode")
 
     class Meta:
         db_table = 'document'
@@ -262,7 +227,7 @@ class Photo(models.Model):
     author = models.CharField(max_length=255)
     caption = models.CharField(max_length=255)
 
-    lake = models.ForeignKey('Lake')
+    lake = models.ForeignKey(NHDLake, db_column="reachcode")
 
     class Meta:
         db_table = "photo"
@@ -367,6 +332,15 @@ class Plant(models.Model):
         return self.name
 
 
+class LakePlant(models.Model):
+    lake_plant_id = models.AutoField(primary_key=True)
+    lake = models.ForeignKey(NHDLake, db_column="reachcode")
+    plant = models.ForeignKey("Plant")
+
+    class Meta:
+        db_table = "lake_plant"
+
+
 class FacilityManager(models.Manager):
     def to_kml(self, bbox):
         return Facility.objects.all().extra(
@@ -404,7 +378,7 @@ class Facility(models.Model):
     icon_url = models.CharField(max_length=254)
     the_geom = models.PointField(srid=3644)
 
-    lake = models.ForeignKey("Lake")
+    lake = models.ForeignKey(NHDLake, db_column="reachcode")
     objects = FacilityManager()
 
     class Meta:

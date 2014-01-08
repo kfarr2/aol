@@ -1,5 +1,5 @@
 from django import forms
-from aol.lakes.models import Document, Lake, LakeCounty, Photo, Plant
+from aol.lakes.models import Document, NHDLake, LakeCounty, Photo, Plant
 from django.utils.translation import ugettext as _
 
 class LakeForm(forms.ModelForm):
@@ -19,7 +19,7 @@ class LakeForm(forms.ModelForm):
             LakeCounty(lake=self.instance, county=county).save()
 
     class Meta:
-        model = Lake
+        model = NHDLake
         fields = (
             'title',
             'body',
@@ -97,7 +97,7 @@ class PlantForm(forms.Form):
                 raise forms.ValidationError(_('Missing attributes: Line %d should have 5 attributes separated by 4 tabs. \n Make sure you have 4 tabs separated 5 attributes') % line_no)
             # Check if reachcode is available and should not be the header
             elif attributes[0] and attributes[0] != 'ReachCode':
-                lakes = Lake.objects.filter(reachcode=attributes[0])
+                lakes = NHDLake.objects.filter(reachcode=attributes[0])
 
                 # Check if that reachcode is corresponding to a lake or a list of lakes
                 if lakes:

@@ -4,7 +4,7 @@
 	<h2>Individual Lake Pages</h2>
 	<ul class='wrap'>
 		{% for lake in lakes %}
-			<li class="{% cycle 'odd' 'even' %}" ><a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">{{ lake.title }}</a> (<em>{{ lake.counties }}</em>)</li>
+            <li class="{% cycle 'odd' 'even' %}" ><a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">{{ lake }}</a> (<em>{{ lake.counties }}</em>)</li>
 		{% endfor %}
 	</ul>
 </div>

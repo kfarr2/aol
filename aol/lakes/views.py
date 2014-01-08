@@ -2,11 +2,11 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse 
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
-from .models import Lake, Photo, Document
+from .models import Photo, Document, NHDLake
 
 def listing(request):
     """Display a list of all the lakes in the Atlas, with pagination"""
-    lakes = Lake.objects.all().order_by("title")
+    lakes = NHDLake.objects.all().order_by("gnis_name")
 
     return render(request, "lakes/listing.html", {
         "lakes": lakes,
@@ -14,7 +14,7 @@ def listing(request):
 
 def detail(request, reachcode):
     """Display the detail view for an individual lake"""
-    lake = get_object_or_404(Lake, reachcode=reachcode)
+    lake = get_object_or_404(NHDLake, reachcode=reachcode)
     photos = Photo.objects.filter(lake=lake)
     documents = Document.objects.filter(lake=lake)
     plants = lake.plants.all()
@@ -27,7 +27,7 @@ def detail(request, reachcode):
 
 def search(request):
     q = request.GET.get('q','')
-    qs = Lake.objects.filter(title__icontains=q)
+    qs = NHDLake.objects.filter(title__icontains=q)
     if not qs:
         return render(request, "lakes/results.html", {
             'error': True, 'query': q})

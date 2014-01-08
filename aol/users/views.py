@@ -3,13 +3,13 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import render, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from aol.lakes.models import Lake, Photo, Document, Photo, Plant 
+from aol.lakes.models import NHDLake, Photo, Document, Photo, Plant 
 from .forms import DocumentForm, LakeForm, PhotoForm, PlantForm
 
 @login_required
 def listing(request):
     """List all the lakes that the admin can edit"""
-    lakes = Lake.objects.all()
+    lakes = NHDLake.objects.all()
     return render(request, "admin/listing.html", {
         "lakes": lakes,
     })
@@ -17,7 +17,7 @@ def listing(request):
 @login_required
 def edit_lake(request, lake_id):
     """The edit page for a lake"""
-    lake = get_object_or_404(Lake, lake_id=lake_id)
+    lake = get_object_or_404(NHDLake, lake_id=lake_id)
     if request.POST:
         form = LakeForm(request.POST, instance=lake)
         if form.is_valid():
@@ -48,7 +48,7 @@ def edit_photo(request, lake_id=None, photo_id=None):
         lake = photo.lake
     except Photo.DoesNotExist:
         # create a new photo with a foreign key to the lake
-        lake = get_object_or_404(Lake, pk=lake_id)
+        lake = get_object_or_404(NHDLake, pk=lake_id)
         photo = Photo(lake=lake)
 
     if request.POST:
@@ -77,7 +77,7 @@ def edit_document(request, lake_id=None, document_id=None):
         lake = document.lake
     except Document.DoesNotExist:
         # create a new document with a foreign key to the lake
-        lake = get_object_or_404(Lake, pk=lake_id)
+        lake = get_object_or_404(NHDLake, pk=lake_id)
         document = Document(lake=lake)
 
     if request.POST:
@@ -116,7 +116,7 @@ def  add_plant(request):
                 # print "%s - %s - %s - %s - %s " % (reach_code, name, common_name, plant_family, former_name)
                 # If reach_code is not empty, look up the lake using reachcode
                 if reach_code:
-                    lakes = Lake.objects.filter(reachcode=reach_code)
+                    lakes = NHDLake.objects.filter(reachcode=reach_code)
                     
                     # If lakes is not empty, then look for exist plant in database
                     # or create new plant information from user input
