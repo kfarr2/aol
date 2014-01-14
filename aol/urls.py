@@ -5,7 +5,7 @@ from aol.lakes import views as lakes
 from aol.home import views as home
 from aol.maps import views as maps
 from aol.users import views as customadmin
-from .views import mussels
+#from .views import mussels
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
@@ -42,7 +42,7 @@ urlpatterns = patterns('',
     url(r'^admin/logout/$', 'djangocas.views.logout', name='admin-logout', kwargs={"next_page": "/"}),
 
     # mussels
-    url(r'^mussels/?$', mussels.merge, name='mussels-merge'),
+    #url(r'^mussels/?$', mussels.merge, name='mussels-merge'),
     
     # Examples:
     # url(r'^$', 'aol.views.home', name='home'),
