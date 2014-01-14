@@ -26,11 +26,11 @@ body {
 }
 a {
     text-decoration: none;
-    color: rgb(8, 103, 130);
+    color: #086782
 }
-a:visited { color: grey }
+a:visited { color: #666; }
 a:hover {
-    color: rgb(8, 103, 130);
+    color: #086782
     text-decoration: underline;
 }
 input { font-size: 16px }
@@ -140,9 +140,7 @@ a.tabs active { color: black }
     text-align: center;
 }
 .lake-photo:first-child { display: block }
-.lake-photo img { width: 400px }
 #photos { position: relative }
-#photo-wrap { height: 275px }
 #previous img { padding: 5px 5px 5px 0px }
 #next img { padding: 5px 0px 5px 5px }
 #numphotos {
@@ -171,10 +169,10 @@ p {
 }
 #map {
     float:left;
-    width:80%;
+    width:70%;
 }
 #info-panel {
-    width:20%; 
+    width:30%; 
     float:right;
     box-sizing:border-box;
     padding:10px;
@@ -183,4 +181,49 @@ p {
 }
 #info-panel th {
     text-align:left;
+}
+.body-spoiler {
+    max-height:100px;
+    overflow:hidden;
+}
+.fadeout {
+    position: relative; 
+    top: -4em;
+    height: 4em;
+    margin-bottom:-4em;
+    background: -webkit-linear-gradient(
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 1) 100%
+    ); 
+    background-image: -moz-linear-gradient(
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 1) 100%
+    );
+    background-image: -o-linear-gradient(
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 1) 100%
+    );
+    background-image: linear-gradient(
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 1) 100%
+    );
+    background-image: -ms-linear-gradient(
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 1) 100%
+    );
+} 
+
+#letter-index a {
+    padding:2px;
+    margin-right:5px;
+    font-weight:bold;
+    text-decoration:underline;
+    font-size:18px;
+    display:block;
+    float:left;
+}
+#letter-index a.active {
+    border:1px dotted black;
+    background:#666;
+    color:#fff;
 }

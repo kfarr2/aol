@@ -1,7 +1,13 @@
-<h2>{{ lake.title }} <em>({{ lake.counties }})</em></h2>
+<h2>{{ lake }} <em>({{ lake.counties }})</em></h2>
+<p>Reachcode: {{ lake.reachcode }}</p>
 
-{{ lake.body|safe }}
+{% if lake.body %}
+    <div class="body-spoiler">
+        {{ lake.body|safe }}
+    </div>
+    <div class="fadeout"></div>
+{% endif %}
 
-{% if lake.page_number %}
-    <a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">Page</a>
+{% if lake.aol_page %}
+    <a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">Continue reading...</a>
 {% endif %}
