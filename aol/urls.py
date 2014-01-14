@@ -19,6 +19,7 @@ urlpatterns = patterns('',
     url(r'^photo-submissions/?$', home.photo_submissions, name='photo-submissions'),
 
     url(r'^lakes/?$', lakes.listing, name='lakes-listing'),
+    url(r'^lakes/(?P<letter>[a-z])/?$', lakes.listing, name='lakes-listing'),
     url(r'^lakes/(?P<reachcode>.+)?$', lakes.detail, name='lakes-detail'),
 
     url(r'^map/?$', maps.home, name='map'),

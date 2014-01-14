@@ -2,6 +2,7 @@ import os
 import re
 from django.conf import settings as SETTINGS
 from django.contrib.gis.db import models
+from django.db.models import Q
 from django.db.models.sql.compiler import SQLCompiler
 from PIL import Image
 
@@ -12,33 +13,59 @@ _quote_name_unless_alias = SQLCompiler.quote_name_unless_alias
 SQLCompiler.quote_name_unless_alias = lambda self, name: name if name.strip().startswith('(') else _quote_name_unless_alias(self, name)
 
 class NHDLakeManager(models.Manager):
-    def get_query_set(self, *args, **kwargs):
-        """
-        Override the default query_set for lakes so that the fishing_zone
-        and a commas separated list of counties are always attached to the Lake
-        object.
-        """
-        qs = super(NHDLakeManager, self).get_query_set(*args, **kwargs).defer("fishing_zone__the_geom").filter(parent=None)
-        # always tack on the fishing zone
-        #qs = qs.select_related("fishing_zone")
-        # we want to get a list of the counties each lake belongs to without
-        # multiple round-trips to the DB, or Django's stupid prefetch_related
-        # method. We build a little subquery, and cleverly tack it onto the
-        # queryset. 
-        sql = """
-        (SELECT 
-            lake_county.reachcode, 
-            array_to_string(array_agg(county.altname ORDER BY county.altname), ', ') AS counties
-        FROM lake_county INNER JOIN county USING(county_id)
-        GROUP BY lake_county.reachcode
-        ) counties
-        """
-        qs = qs.extra(
-            select={"counties": "counties.counties"},
-            tables=[sql],
-            where=["counties.reachcode = nhd.reachcode"]
-        )
-        return qs
+    def important_lakes(self, starts_with=None):
+        where_clause = ""
+        where_params = {}
+        if starts_with:
+            where_clause = " AND (lower(gnis_name) LIKE %(starts_with)s OR lower(title) LIKE %(starts_with)s OR lower(regexp_replace(COALESCE(NULLIF(title, ''), gnis_name), '^[lL]ake\s*', '')) LIKE %(starts_with)s) "
+            where_params = {"starts_with": starts_with.lower() + "%"}
+
+        results = self.raw("""
+        SELECT 
+            reachcode, 
+            permanent_id,
+            fdate, 
+            ftype, 
+            fcode, 
+            shape_length, 
+            shape_area, 
+            resolution, 
+            gnis_id,
+            gnis_name, 
+            area_sq_km, 
+            parent,
+            aol_page,
+            elevation,
+            title, 
+            fishing_zone_id, 
+            huc6_id,
+            array_to_string(array_agg(county.altname ORDER BY county.altname), ', ') AS counties,
+            regexp_replace(COALESCE(NULLIF(title, ''), gnis_name), '^[lL]ake\s*', '') AS alphabetic_title
+            --body
+        FROM 
+            nhd
+        LEFT JOIN
+            lake_county USING(reachcode)
+        LEFT JOIN
+            county USING(county_id)
+        WHERE reachcode IN(
+            -- get all reachcodes for lakes with plants
+            SELECT reachcode FROM "lake_plant" GROUP BY reachcode HAVING COUNT(*) >= 1
+            UNION
+            -- get all reachcodes for lakes with documents
+            SELECT reachcode FROM "document" GROUP BY reachcode HAVING COUNT(*) >= 1
+            UNION
+            -- get all reachcodes for lakes with photos
+            SELECT reachcode FROM "photo" GROUP BY reachcode HAVING COUNT(*) >= 1
+            UNION
+            -- get all original AOL lakes
+            SELECT reachcode FROM "nhd" WHERE aol_page IS NOT NULL
+        ) %(where_clause)s
+        GROUP BY reachcode, permanent_id, fdate, ftype, fcode, shape_length, shape_area, resolution, gnis_id, gnis_name, area_sq_km, parent, aol_page,  elevation, title, fishing_zone_id, huc6_id
+        ORDER BY COALESCE(NULLIF(title, ''), gnis_name)
+        """ % {"where_clause": where_clause}, where_params)
+
+        return results
 
     def to_kml(self, scale, bbox):
         """
@@ -57,14 +84,16 @@ class NHDLakeManager(models.Manager):
         else:
             raise ValueError("scale not valid")
 
-        return Lake.objects.all().extra(
-            tables=[sql],
-            select={'kml': 'st_askml(lake_geom.%s)' % (geom_col)},
+        qs = self.all().extra(
+            select={'kml': 'st_askml(%s)' % (geom_col)},
             where=[
                 "nhd.the_geom && st_setsrid(st_makebox2d(st_point(%s, %s), st_point(%s, %s)), 3644)",
+                "ST_AREA(%s) > 0" % geom_col
             ],
             params=bbox
         )
+
+        return qs
 
 class NHDLake(models.Model):
     reachcode = models.CharField(max_length=32, primary_key=True)
@@ -97,6 +126,21 @@ class NHDLake(models.Model):
 
     def __unicode__(self):
         return self.title or self.gnis_name or self.pk
+
+    @property
+    def counties(self):
+        """Return a nice comma separated list of the counties this lake belongs to"""
+        if not hasattr(self, "_counties"):
+            self._counties = ",".join(c.name for c in self.county_set.all())
+        return self._counties
+
+    @counties.setter
+    def counties(self, value):
+        """
+        We need a setter since the raw query we perform in the manager class
+        generates the comma separated list of counties in the query itself
+        """
+        self._counties = value
 
     @property
     def page_urls(self):

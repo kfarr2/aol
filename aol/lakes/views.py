@@ -4,12 +4,19 @@ from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
 from .models import Photo, Document, NHDLake
 
-def listing(request):
+def listing(request, letter=None):
     """Display a list of all the lakes in the Atlas, with pagination"""
-    lakes = NHDLake.objects.all().order_by("gnis_name")
+    lakes = list(NHDLake.objects.important_lakes())
+    letters = sorted(set(str(lake)[0].upper() for lake in lakes if str(lake)))
+
+    if letter is not None:
+        letter = letter.upper()
+        lakes = list(NHDLake.objects.important_lakes(starts_with=letter))
 
     return render(request, "lakes/listing.html", {
+        "letters": letters,
         "lakes": lakes,
+        "letter": letter,
     })
 
 def detail(request, reachcode):

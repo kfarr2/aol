@@ -2,10 +2,21 @@
 {% block content %}
 <div class= 'wrap' >
 	<h2>Individual Lake Pages</h2>
-	<ul class='wrap'>
-		{% for lake in lakes %}
-            <li class="{% cycle 'odd' 'even' %}" ><a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">{{ lake }}</a> (<em>{{ lake.counties }}</em>)</li>
-		{% endfor %}
-	</ul>
+    <div id="letter-index">
+        {% for a_letter in letters %}
+            <a class="{% if a_letter == letter %}active{% endif %}" href="{% url 'lakes-listing' a_letter|lower %}">{{ a_letter }}</a>
+        {% endfor %}
+    </div>
+    <div class="clear"></div>
+
+    {% if letter %}
+        <ul class='wrap'>
+            {% for lake in lakes %}
+                <li class="{% cycle 'odd' 'even' %}" ><a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">{{ lake }}</a> (<em>{{ lake.counties }}</em>)</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Click a letter above to see a listing of lakes.</p>
+    {% endif %}
 </div>
 {% endblock %}
