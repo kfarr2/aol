@@ -19,7 +19,7 @@ $(document).ready(function(){
         $('#info-panel-search').show();
     });
 
-    $('#map').on("featureselected", function(e, extras){
+    $('#map').on("lake:selected", function(e, extras){
         var feature = extras.feature;
         var attrs = feature.attributes;
         $.get('/maps/panel/' + attrs.id, function(html){
@@ -30,7 +30,7 @@ $(document).ready(function(){
 });
 </script>
 
-<div style="width:80%; height:800px" id="map"></div>
+<div style="height:800px" id="map"></div>
 <div id="info-panel">
     <a href="#" id="info-panel-legend-button">Legend</a>
     <a href="#" id="info-panel-search-button">Search</a>

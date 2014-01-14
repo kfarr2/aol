@@ -37,11 +37,14 @@ $(document).ready(function(){
 
     layers.lakes_kml.events.register("featureselected", layers.lakes_kml_layer, function(evt){
         var feature = this.selectedFeatures[0];
-        $('#map').trigger('featureselected', {feature: feature});
+        $('#map').trigger('lake:selected', {feature: feature});
     });
 
     // make the KML layers clickable
     var control = new OpenLayers.Control.SelectFeature([layers.lakes_kml])
+    // this allows the map to be dragged when the mouse is down on one of this
+    // layer's items
+    control.handlers.feature.stopDown = false;
     map.addControl(control)
     control.activate()
 });
