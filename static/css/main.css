@@ -60,6 +60,9 @@ ul {
 .wrap { padding: 20px }
 /* header and nav styles */
 #header-wrap { background-color: #06186A }
+#small-header {
+    background-color: #06186A;
+}
 div#branding { min-width: 440px }
 #logo { padding: 10px }
 #site-title { padding-top: 10px }
@@ -110,19 +113,23 @@ li.odd { background: rgb(248, 248, 248) }
 ul.tabs { border-bottom: solid 1px grey }
 ul.tabs li {
     display: inline-block;
+}
+ul.tabs li a {
+    display: inline-block;
     padding-left: 5px;
     padding-right: 5px;
     background: grey;
     border-top-left-radius: 3px;
     border-top-right-radius: 3px;
+    color:#fff;
 }
-ul.tabs li.active {
+ul.tabs a.active {
     background: rgb(248, 248, 248);
     border: solid 1px grey;
     border-bottom: none;
+    color:#333;
 }
 a.tabs,
-a.tabs active { color: black }
 .aside {
     display: none;
     margin-top: 8px;
@@ -170,14 +177,37 @@ p {
 #map {
     float:left;
     width:70%;
+    position:absolute;
+    top:0;
+    left:0;
+    height:100%;
 }
-#info-panel {
+#small-header {
+    color: #fff;
+    font-size: 18px;
+    text-decoration: none;
+}
+#small-header img {
+    vertical-align:middle;
+}
+#small-header a {
+    color: #fff;
+}
+
+#side-panel {
     width:30%; 
     float:right;
     box-sizing:border-box;
-    padding:10px;
-    border-left:5px solid black;
     background-color:#fff;
+    overflow:auto;
+    height:100%;
+    position:fixed;
+    right:0;
+    border-left:1px solid #06186A;
+}
+
+#info-panel {
+    padding:10px;
 }
 #info-panel th {
     text-align:left;
@@ -226,4 +256,38 @@ p {
     border:1px dotted black;
     background:#666;
     color:#fff;
+}
+#pull-out-tabs {
+    position: absolute;
+    left: 70%;
+    z-index: 5;
+    margin-left: -99px; /* 1 pixel less than the width */
+    width: 100px;
+    box-sizing: border-box;
+    top: 108px;
+}
+#pull-out-tabs li {
+    margin-bottom: 15px;
+}
+#pull-out-tabs li a {
+    display:block;
+    background-color: #06186A;
+    padding: 3px;
+    padding-left:5px;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    font-weight:bold;
+    color:#fff;
+    border-top:1px solid #06186A;
+    border-left:1px solid #06186A;
+    border-bottom:1px solid #06186A;
+}
+
+#pull-out-tabs li a.active {
+    background-color:#fff;
+    color:#666;
+    border-right:1px solid #fff;
+}
+#lake-loading {
+    display:none;
 }

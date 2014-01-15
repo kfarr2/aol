@@ -1,140 +1,144 @@
 {% extends "base.html" %}
 {% block body %}
-{% block header %}{% include "header.html"%}{% endblock %} 
 <script type="text/javascript" src="{{ STATIC_URL }}/js/OpenLayers/OpenLayers.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}/js/proj4js.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/layers.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/map.js"></script>
 <script type="text/javascript">
 $(document).ready(function(){
-    $('.info-panel-panel').hide();
-    $('#info-panel-legend').show();
-
-    $('#info-panel-legend-button').click(function(){
-        $('.info-panel-panel').hide();
-        $('#info-panel-legend').show();
-    });
-    $('#info-panel-search-button').click(function(){
-        $('.info-panel-panel').hide();
-        $('#info-panel-search').show();
-    });
-
+    $('#pull-out-tabs').arcTabs();
     $('#map').on("lake:selected", function(e, extras){
         var feature = extras.feature;
         var attrs = feature.attributes;
+        $('#pull-out-tabs a[href="#info-panel-lake"]').click();
+        $('#lake-loading').show();
+        $('#lake-content').html("")
         $.get('/maps/panel/' + attrs.id, function(html){
-            $('.info-panel-panel').hide();
-            $('#info-panel-lake').html(html).show();
+            $('#lake-content').html(html)
+            $('#lake-loading').hide();
         });
     });
 });
 </script>
 
-<div style="height:800px" id="map"></div>
-<div id="info-panel">
-    <a href="#" id="info-panel-legend-button">Legend</a>
-    <a href="#" id="info-panel-search-button">Search</a>
+<ul id="pull-out-tabs">
+    <li><a href="#info-panel-legend" class="tab">Legend</a></li>
+    <li><a href="#info-panel-search" class="tab">Search</a></li>
+    <li><a href="#info-panel-lake" class="tab">Lake</a></li>
+</ul>
 
-    <div id="info-panel-lake" class="info-panel-panel">
-        
+<div id="map"></div>
+<div id="side-panel">
+    <div id="small-header">
+        <a href='/'><img id='logo' src='{{ STATIC_URL }}img/aol_logo.png' />Atlas of Oregon Lakes</a>
     </div>
+    <div id="info-panel">
 
-    <div id="info-panel-search" class="info-panel-panel">
-        <input type="text" value="" />
-        <input type="submit" value="Submit" />
-    </div>
+        <div id="info-panel-lake" class="info-panel-panel">
+            <div id="lake-content">
+                <p>Click a lake on the map to view information about it.</p>
+            </div>
+            <div id="lake-loading">...loading...</div>
+        </div>
 
-    <div id="info-panel-legend" class="info-panel-panel">
-        <table>
-            <tr>
-                <td><img src="/static/img/legend/icon1.png"></td>
-                <td>Lake Data Available</td>
-            </tr>
-            <tr>
-                <td><img src="/static/img/legend/icon2.png"></td>
-                <td>Lake Watersheds</td>
-            </tr>
-            <tr>
-                <th colspan="2">Waterbodies</th>
-            </tr>
-            <tr>
-                <td><img src="/static/img/legend/icon3.png"></td>
-                <td>Lake/Reservoir — Permanent</td>
-            </tr>
-            <tr>
-                <td><img src="/static/img/legend/icon4.png"></td>
-                <td>Lake/Reservoir — Intermittent</td>
-            </tr>
-            <tr>
-                <td><img src="/static/img/legend/icon5.png"></td>
-                <td>Playa</td>
-            </tr>
-            <tr>
-                <td><img src="/static/img/legend/icon6.png"></td>
-                <td>Ice/Snow</td>
-            </tr>
-            <tr>
-                <td><img src="/static/img/legend/icon7.png"></td>
-                <td>Swamp/Marsh</td>
-            </tr>
-            <tr>
-                <th colspan="2">Streams</th>
-            </tr>
-            <tr>
-                <td><img src="/static/img/legend/icon8.png"></td>
-                <td>Permanent</td>
-            </tr>
-            <tr>
-                <td><img src="/static/img/legend/icon9.png"></td>
-                <td>Intermittent</td>
-            </tr>
-            <tr>
-                <td><img src="/static/img/legend/icon10.png"></td>
-                <td>Canal</td>
-            </tr>
-            <tr>
-                <td><img src="/static/img/legend/icon11.png"></td>
-                <td>Pipeline</td>
-            </tr>
-            <tr>
-                <th colspan="2">Roads</th>
-            </tr>
-            <tr>
-                <td><img src="/static/img/legend/icon12.png"></td>
-                <td>Interstate</td>
-            </tr>
-            <tr>
-                <td><img src="/static/img/legend/icon13.png"></td>
-                <td>US</td>
-            </tr>
-            <tr>
-                <td><img src="/static/img/legend/icon14.png"></td>
-                <td>State</td>
-            </tr>
-            <tr>
-                <td><img src="/static/img/legend/icon15.png"></td>
-                <td>Non-State</td>
-            </tr>
-            <tr>
-                <td><img src="/static/img/legend/icon16.png"></td>
-                <td>Local</td>
-            </tr>
-            <tr>
-                <td><img src="/static/img/legend/icon17.png"></td>
-                <td>Railways</td>
-            </tr>
-            <tr>
-                <th colspan="2">State/County/City</th>
-            </tr>
-            <tr>
-                <td><img src="/static/img/legend/icon18.png"></td>
-                <td>State/County</td>
-            </tr>
-            <tr>
-                <td><img src="/static/img/legend/icon19.png"></td>
-                <td>Cities/Places</td>
-            </tr>
-        </table>
+        <div id="info-panel-search" class="info-panel-panel">
+            <label>Enter the name of a lake, its reachcode or GNIS ID:</label>
+            <input type="text" value="" />
+            <input type="submit" value="Search" />
+        </div>
+
+        <div id="info-panel-legend" class="info-panel-panel">
+            <table>
+                <tr>
+                    <td><img src="/static/img/legend/icon1.png"></td>
+                    <td>Lake Data Available</td>
+                </tr>
+                <tr>
+                    <td><img src="/static/img/legend/icon2.png"></td>
+                    <td>Lake Watersheds</td>
+                </tr>
+                <tr>
+                    <th colspan="2">Waterbodies</th>
+                </tr>
+                <tr>
+                    <td><img src="/static/img/legend/icon3.png"></td>
+                    <td>Lake/Reservoir — Permanent</td>
+                </tr>
+                <tr>
+                    <td><img src="/static/img/legend/icon4.png"></td>
+                    <td>Lake/Reservoir — Intermittent</td>
+                </tr>
+                <tr>
+                    <td><img src="/static/img/legend/icon5.png"></td>
+                    <td>Playa</td>
+                </tr>
+                <tr>
+                    <td><img src="/static/img/legend/icon6.png"></td>
+                    <td>Ice/Snow</td>
+                </tr>
+                <tr>
+                    <td><img src="/static/img/legend/icon7.png"></td>
+                    <td>Swamp/Marsh</td>
+                </tr>
+                <tr>
+                    <th colspan="2">Streams</th>
+                </tr>
+                <tr>
+                    <td><img src="/static/img/legend/icon8.png"></td>
+                    <td>Permanent</td>
+                </tr>
+                <tr>
+                    <td><img src="/static/img/legend/icon9.png"></td>
+                    <td>Intermittent</td>
+                </tr>
+                <tr>
+                    <td><img src="/static/img/legend/icon10.png"></td>
+                    <td>Canal</td>
+                </tr>
+                <tr>
+                    <td><img src="/static/img/legend/icon11.png"></td>
+                    <td>Pipeline</td>
+                </tr>
+                <tr>
+                    <th colspan="2">Roads</th>
+                </tr>
+                <tr>
+                    <td><img src="/static/img/legend/icon12.png"></td>
+                    <td>Interstate</td>
+                </tr>
+                <tr>
+                    <td><img src="/static/img/legend/icon13.png"></td>
+                    <td>US</td>
+                </tr>
+                <tr>
+                    <td><img src="/static/img/legend/icon14.png"></td>
+                    <td>State</td>
+                </tr>
+                <tr>
+                    <td><img src="/static/img/legend/icon15.png"></td>
+                    <td>Non-State</td>
+                </tr>
+                <tr>
+                    <td><img src="/static/img/legend/icon16.png"></td>
+                    <td>Local</td>
+                </tr>
+                <tr>
+                    <td><img src="/static/img/legend/icon17.png"></td>
+                    <td>Railways</td>
+                </tr>
+                <tr>
+                    <th colspan="2">State/County/City</th>
+                </tr>
+                <tr>
+                    <td><img src="/static/img/legend/icon18.png"></td>
+                    <td>State/County</td>
+                </tr>
+                <tr>
+                    <td><img src="/static/img/legend/icon19.png"></td>
+                    <td>Cities/Places</td>
+                </tr>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}
