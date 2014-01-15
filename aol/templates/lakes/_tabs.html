@@ -1,0 +1,112 @@
+<div class'tab-wrap'>
+    <ul class='tabs' id="lake-tabs">
+        <li><a class='tab' title='maps' href='#maps'>Maps</a></li>
+        <li><a class='tab' title='plants' href='#plants'>Plants</a></li>
+        <li><a class='tab' title='mussels' href='#mussels'>Mussels</a></li>
+        <li><a class='tab' title='other-information' href='#other-information'>Documents</a></li>
+        <li><a class='tab' title='photos' href='#photos'>Photos</a></li>
+    </ul>
+    <div id='maps' class='aside'>
+        {% if lake.watershed_tile_url %}
+            <div id='watershed' class='lake-watershed map'>
+                <h2>Watershed</h2>
+                <img src="{{ lake.watershed_tile_url }}" /> 
+            </div>
+        {% endif %}
+
+        {% if lake.basin_tile_url %}
+            <div id='basin' class='lake-waterbasin map'>
+                <h2>Basin</h2>
+                <img src="{{ lake.basin_tile_url }}" />
+            </div>
+        {% endif %}
+
+        <select id='map-select' >
+            {% if lake.watershed_tile_url %}
+                <option value='#watershed'>Watershed</option>
+            {% endif %}
+
+            {% if lake.basin_tile_url %}
+                <option value='#basin'>Basin</option>
+            {% endif %}
+        </select>
+    </div>
+
+    <div class="mussels aside" id='mussels'>
+        {% if lake.mussels %}
+            {{ lake.mussels }}
+        {% else %}
+            <p>No mussel data available.</p>
+        {% endif %}
+    </div>
+
+    <div class="plants aside" id='plants'>
+        {% if plants %}
+            <ul>
+                {% for plant in plants %}
+                    <li>{{ plant.name }} ({{ plant.common_name }})</li>
+                {% endfor %}
+            </ul>
+        {% else %}  
+            <p>No plant data available.</p>
+        {% endif %}
+    </div>
+    <div class='other-information aside' id='other-information'>
+        {% if documents %}
+            <ul>
+                {% for doc in documents %}
+                    <li><a href="{{ doc.file.url }}">{{ doc.name }}</a></li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No documents available.</p>
+        {% endif %}
+    </div>
+    <div id='photos' class="aside">
+        {% if photos %}
+            <div id='photo-wrap'>
+                {% for photo in photos %}
+                    <div class="lake-photo">
+                        <a href='{{ photo.url }}'><img src="{{ photo.thumbnail_url }}" target="_blank"/></a>
+                    </div>
+                {% endfor %}
+            </div>
+            <div id='previous' class='block'><img src='{{ STATIC_URL }}img/prev.png'></div>
+            <div id='next' class='block'><img src='{{ STATIC_URL }}img/next.png'></div>
+            <div id='numphotos' class='block'>0/0</div>
+        {% else %}
+            <p>No photos available.</p>
+            <p>If you would like your photos of Oregon lakes featured in the online atlas, <a href="/photo-submissions">click here</a> for submission criteria.</p>
+        {% endif %}
+    </div>
+</div>
+<script type='text/javascript'>
+    $(document).ready(function(){
+        $('#lake-tabs').arcTabs();
+
+        //map select    
+        $('.map:nth-child(2)').hide();
+        $('#map-select').change(function(){
+            $('.map').hide(); 
+            $(this.value).show();
+        });
+        //slideshow 
+        var current = 1;
+        var numphotos = $('.lake-photo').length;
+        $('#numphotos').html(current + '/' + numphotos); 
+        $('#next').click(function(){
+            $('.lake-photo:nth-child('+current+'').hide();
+            current +=1; 
+            if(current > numphotos) current -= numphotos;
+            $('.lake-photo:nth-child('+current+'').show();
+            $('#numphotos').html(current + '/' + numphotos); 
+        });
+        $('#previous').click(function(){
+            $('.lake-photo:nth-child('+current+'').hide();
+            current -= 1; 
+            if(current < 1) current += numphotos;
+            $('.lake-photo:nth-child('+current+'').show();
+            $('#numphotos').html(current + '/' + numphotos); 
+        });
+    });
+</script>

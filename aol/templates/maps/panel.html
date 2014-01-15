@@ -9,5 +9,7 @@
 {% endif %}
 
 {% if lake.aol_page %}
-    <a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">Continue reading...</a>
+    <p><a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">Continue reading...</a></p>
 {% endif %}
+
+{% include "lakes/_tabs.html" %}
