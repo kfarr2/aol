@@ -4,6 +4,7 @@ from django.conf import settings as SETTINGS
 from django.contrib.gis.db import models
 from django.db.models import Q
 from django.db.models.sql.compiler import SQLCompiler
+from django.db import connections
 from PIL import Image
 
 # This monkey patch allows us to write subqueries in the `tables` argument to the
@@ -215,6 +216,36 @@ class NHDLake(models.Model):
         path = "export?bbox=%s&bboxSR=&layers=&layerdefs=&size=&imageSR=&format=jpg&transparent=false&dpi=&time=&layerTimeOptions=&f=image"
         return SETTINGS.TILE_URL + (path % bbox)
 
+    def mussels(self):
+        """
+        This queries the mussel DB for any mussels that are within a certain
+        distance of this lake. It returns a comma separated string of the
+        status of the mussels
+        """
+        distance = 0
+        cursor = connections['default'].cursor()
+        cursor.execute("""SELECT ST_ASEWKT(the_geom) as ewkt, ST_SRID(the_geom) AS srid FROM nhd WHERE reachcode = %s""", (self.reachcode,))
+        row = cursor.fetchone()
+        ewkt = row[0]
+        srid = row[1]
+
+        # now query the mussels DB for mussels within a certain distance of this lake
+        mussels_cursor = connections['mussels'].cursor()
+        mussels_cursor.execute("""
+            SELECT 
+                DISTINCT status 
+            FROM 
+                display_view 
+            WHERE 
+                ST_DWITHIN(ST_TRANSFORM(the_geom, %s), ST_GeomFromEWKT(%s), %s)
+        """, (srid, ewkt, distance))
+        results = []
+        for row in mussels_cursor:
+            results.append(row[0])
+
+        return ", ".join(results)
+
+
 
 class LakeGeom(models.Model):
     reachcode = models.CharField(max_length=32, primary_key=True)
@@ -275,6 +306,14 @@ class Photo(models.Model):
 
     class Meta:
         db_table = "photo"
+
+    def exists(self):
+        """Returns True if the file exists on the filesystem"""
+        try:
+            open(self.file.path)
+        except IOError:
+            return False
+        return True
 
     @property
     def url(self):
