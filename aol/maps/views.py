@@ -1,6 +1,7 @@
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from aol.lakes.models import NHDLake, Photo, Document, Facility
+from aol.lakes.views import detail
 
 def home(request):
     """Displays the interactive map"""
@@ -29,11 +30,4 @@ def facilities(request):
     })
 
 def panel(request, reachcode):
-    lake = get_object_or_404(NHDLake, reachcode=reachcode)
-    photos = Photo.objects.filter(lake=lake)
-    documents = Document.objects.filter(lake=lake)
-    return render(request, "maps/panel.html", {
-        "lake": lake,
-        "photos": photos,
-        "documents": documents,
-    })
+    return detail(request, reachcode, "maps/panel.html")

@@ -19,13 +19,13 @@ def listing(request, letter=None):
         "letter": letter,
     })
 
-def detail(request, reachcode):
+def detail(request, reachcode, template=None):
     """Display the detail view for an individual lake"""
     lake = get_object_or_404(NHDLake, reachcode=reachcode)
-    photos = Photo.objects.filter(lake=lake)
+    photos = [p for p in Photo.objects.filter(lake=lake) if p.exists()]
     documents = Document.objects.filter(lake=lake)
     plants = lake.plants.all()
-    return render(request, "lakes/detail.html", {
+    return render(request, template or "lakes/detail.html", {
         "lake": lake,
         "photos": photos,
         "documents": documents,
