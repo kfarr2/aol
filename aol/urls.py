@@ -23,6 +23,7 @@ urlpatterns = patterns('',
     url(r'^lakes/(?P<reachcode>.+)?$', lakes.detail, name='lakes-detail'),
 
     url(r'^map/?$', maps.home, name='map'),
+    url(r'^map/search/?$', maps.search, name='map-search'),
     url(r'^map/lakes\.kml$', maps.lakes, name='lakes-kml'),
     url(r'^map/facilities\.kml$', maps.facilities, name='facilities-kml'),
     url(r'^maps/panel/(?P<reachcode>.+)?$', maps.panel, name='lakes-panel'),

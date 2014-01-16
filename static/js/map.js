@@ -1,6 +1,7 @@
 // These are the required projections for use on the map (http://www.spatialreference.org/ref/epsg/3644/proj4js/)
 Proj4js.defs["EPSG:3644"] = "+proj=lcc +lat_1=43 +lat_2=45.5 +lat_0=41.75 +lon_0=-120.5 +x_0=399999.9999984 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +to_meter=0.3048 +no_defs";
 
+var MAP;
 $(document).ready(function(){
     // map config
     var scales = [1728004.3888287468, 864002.1944143734, 432001.0972071867, 216000.5486035933, 108000.2743017966, 54000.1371508983, 27000.0685754491, 13500.0342877245, 6750.0171438622];
@@ -16,12 +17,10 @@ $(document).ready(function(){
 
     // create the map, add the layers, and zoom to the initial location
     var map = new OpenLayers.Map('map', map_options);
+    MAP = map;
     map.addLayer(layers.base);
     map.addLayer(layers.facilities_kml);
     map.addLayer(layers.lakes_kml);
-    map.zoomToMaxExtent();
-    map.setCenter(new OpenLayers.LonLat(1294408, 865759), 0);
-
     // when the map is moved update the lakes_kml_layer since it lazily fetches
     // the KML from the server
     map.events.register("moveend", map, function(event){
@@ -47,5 +46,19 @@ $(document).ready(function(){
     control.handlers.feature.stopDown = false;
     map.addControl(control)
     control.activate()
+
+    // zoom the map
+    var url = $.url();
+    if(url.param('minx') && url.param('miny') && url.param('maxx') && url.param('maxy')){
+        console.log("zoom");
+        map.zoomToExtent(new OpenLayers.Bounds(url.param('minx'), url.param('miny'), url.param('maxx'), url.param('maxy')), true);
+    } else {
+        map.zoomToMaxExtent();
+        map.setCenter(new OpenLayers.LonLat(1294408, 865759), 0);
+    }
+
+    $(document).on("map:zoomto", function(e){
+        map.zoomToExtent(new OpenLayers.Bounds(e.minx, e.miny, e.maxx, e.maxy), true);
+    });
 });
 

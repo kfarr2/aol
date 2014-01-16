@@ -4,6 +4,7 @@
 <script type="text/javascript" src="{{ STATIC_URL }}/js/proj4js.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/layers.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/map.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/purl.js"></script>
 <script type="text/javascript">
 $(document).ready(function(){
     $('#pull-out-tabs').arcTabs();
@@ -16,6 +17,14 @@ $(document).ready(function(){
         $.get('/maps/panel/' + attrs.id, function(html){
             $('#lake-content').html(html)
             $('#lake-loading').hide();
+        });
+    });
+
+    $('#search-form').submit(function(e){
+        e.preventDefault();
+        console.log($(this).serialize());
+        $.get('{% url 'map-search' %}', $(this).serialize(), function(html){
+            $('#search-content').html(html);
         });
     });
 });
@@ -34,20 +43,26 @@ $(document).ready(function(){
     </div>
     <div id="info-panel">
 
-        <div id="info-panel-lake" class="info-panel-panel">
+        <div id="info-panel-lake">
             <div id="lake-content">
                 <p>Click a lake on the map to view information about it.</p>
             </div>
             <div id="lake-loading">...loading...</div>
         </div>
 
-        <div id="info-panel-search" class="info-panel-panel">
+        <div id="info-panel-search">
             <label>Enter the name of a lake, its reachcode or GNIS ID:</label>
-            <input type="text" value="" />
-            <input type="submit" value="Search" />
+            <form method="get" action="" id="search-form">
+                <input type="text" value="" name="query" />
+                <input type="submit" value="Search" />
+            </form>
+            <div id="search-content">
+
+            </div>
+            <div id="search-loading">...loading...</div>
         </div>
 
-        <div id="info-panel-legend" class="info-panel-panel">
+        <div id="info-panel-legend">
             <table>
                 <tr>
                     <td><img src="/static/img/legend/icon1.png"></td>

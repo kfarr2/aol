@@ -129,6 +129,14 @@ class NHDLake(models.Model):
         return self.title or self.gnis_name or self.pk
 
     @property
+    def bounding_box(self):
+        if not hasattr(self, "_bbox"):
+            lakes = NHDLake.objects.raw("""SELECT reachcode, ST_Box2D(ST_Envelope(st_expand(the_geom,1000))) as coords from nhd WHERE reachcode = %s""", (self.pk,))
+            lake = list(lakes)[0]
+            self._bbox = re.sub(r'[^0-9.-]', " ", lake.coords).split()
+        return self._bbox
+
+    @property
     def counties(self):
         """Return a nice comma separated list of the counties this lake belongs to"""
         if not hasattr(self, "_counties"):
