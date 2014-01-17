@@ -7,10 +7,8 @@ from aol.lakes.views import detail
 
 def home(request):
     """Displays the interactive map"""
-    lakes = NHDLake.objects.all()
-
     return render(request, "maps/map.html", {
-        "lakes": lakes,
+
     })
 
 def lakes(request):
@@ -33,9 +31,16 @@ def facilities(request):
     })
 
 def panel(request, reachcode):
+    """
+    Return the HTML for the information panel displayed when a lake is
+    clicked on the map
+    """
     return detail(request, reachcode, "maps/panel.html")
 
 def search(request):
+    """
+    Return the HTML when a search is performed on the map
+    """
     query = request.GET.get("query", "")
     lakes = NHDLake.objects.filter(Q(gnis_name__icontains=query) | Q(title__icontains=query) | Q(gnis_id__icontains=query) | Q(reachcode__icontains=query)).prefetch_related("county_set")[:100]
     return render(request, "maps/_results.html", {"lakes": lakes})
