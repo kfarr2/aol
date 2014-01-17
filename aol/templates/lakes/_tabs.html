@@ -7,15 +7,16 @@
         <li><a class='tab' title='photos' href='#photos'>Photos</a></li>
     </ul>
     <div id='maps' class='aside'>
+        <p><strong>Area:</strong> {{ lake.area|floatformat }} acres | <strong>Shoreline:</strong> {{ lake.perimeter|floatformat }} mi</p>
         {% if lake.watershed_tile_url %}
-            <div id='watershed' class='lake-watershed map'>
+            <div id='watershed' class='lake-watershed map lake-map'>
                 <h2>Watershed</h2>
                 <img src="{{ lake.watershed_tile_url }}" /> 
             </div>
         {% endif %}
 
         {% if lake.basin_tile_url %}
-            <div id='basin' class='lake-waterbasin map'>
+            <div id='basin' class='lake-waterbasin map lake-map'>
                 <h2>Basin</h2>
                 <img src="{{ lake.basin_tile_url }}" />
             </div>
@@ -85,7 +86,7 @@
         $('#lake-tabs').arcTabs();
 
         //map select    
-        $('.map:nth-child(2)').hide();
+        $('.lake-map:not(:first)').hide();
         $('#map-select').change(function(){
             $('.map').hide(); 
             $(this.value).show();

@@ -131,6 +131,26 @@ class NHDLake(models.Model):
         return self.title or self.gnis_name or self.pk
 
     @property
+    def area(self):
+        """Returns the number of acres this lake is"""
+        if not hasattr(self, "_area"):
+            cursor = connections['default'].cursor()
+            # 43560 is the number of square feet in an arre
+            cursor.execute("SELECT ST_AREA(the_geom)/43560 FROM nhd WHERE reachcode = %s", (self.reachcode,))
+            self._area = cursor.fetchone()[0]
+        return self._area
+
+    @property
+    def perimeter(self):
+        """Returns the number of acres this lake is"""
+        if not hasattr(self, "_perimeter"):
+            cursor = connections['default'].cursor()
+            # 5280 is the number of feet in a mile
+            cursor.execute("SELECT ST_PERIMETER(the_geom)/5280 FROM nhd WHERE reachcode = %s", (self.reachcode,))
+            self._perimeter = cursor.fetchone()[0]
+        return self._perimeter
+
+    @property
     def bounding_box(self):
         if not hasattr(self, "_bbox"):
             lakes = NHDLake.objects.raw("""SELECT reachcode, ST_Box2D(ST_Envelope(st_expand(the_geom,1000))) as coords from nhd WHERE reachcode = %s""", (self.pk,))
