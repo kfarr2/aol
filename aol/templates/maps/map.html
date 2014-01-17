@@ -23,8 +23,11 @@ $(document).ready(function(){
     $('#search-form').submit(function(e){
         e.preventDefault();
         console.log($(this).serialize());
+        $('#search-loading').show();
+        $('#search-content').html("")
         $.get('{% url 'map-search' %}', $(this).serialize(), function(html){
             $('#search-content').html(html);
+            $('#search-loading').hide();
         });
     });
 });
@@ -47,7 +50,7 @@ $(document).ready(function(){
             <div id="lake-content">
                 <p>Click a lake on the map to view information about it.</p>
             </div>
-            <div id="lake-loading">...loading...</div>
+            <div id="lake-loading"><img src="{{ STATIC_URL }}img/ajax-loader.gif" /></div>
         </div>
 
         <div id="info-panel-search">
@@ -55,11 +58,9 @@ $(document).ready(function(){
             <form method="get" action="" id="search-form">
                 <input type="text" value="" name="query" />
                 <input type="submit" value="Search" />
+                <img id="search-loading" src="{{ STATIC_URL }}img/ajax-loader.gif" />
             </form>
-            <div id="search-content">
-
-            </div>
-            <div id="search-loading">...loading...</div>
+            <div id="search-content"></div>
         </div>
 
         <div id="info-panel-legend">

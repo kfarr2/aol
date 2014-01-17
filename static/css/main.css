@@ -298,18 +298,21 @@ p {
 #search-form input {
     display:inline;
 }
+#search-form {
+    margin-bottom:10px;
+}
 #search-content {
     border-spacing:0;
 }
-#results-table tbody tr:nth-child(4n-1) {
+#results-table tbody tr:nth-child(4n-2) {
     background-color:#efefef;
 }
-#results-table tbody tr:nth-child(4n) {
+#results-table tbody tr:nth-child(4n+1) {
     background-color:#efefef;
 }
 #results-table {
     font-size:14px;
-    border-spacing:none;
+    border-spacing:0;
 }
 #results-table td {
     padding:3px;

@@ -1,4 +1,4 @@
-<h2>{{ lake }} <em>({{ lake.counties }})</em></h2>
+<h2>{{ lake }} <em>({{ lake.counties|default:"Not in Oregon" }})</em></h2>
 <p>Reachcode: {{ lake.reachcode }}</p>
 
 {% if lake.body %}
