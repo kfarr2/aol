@@ -16,7 +16,8 @@
         <Placemark>
             <id></id>
             <name>{{ row.name }}</name>
-            <description>
+            <description><![CDATA[
+                <h4>{{ row.name }}</h4>
                 <div class='facility-info'>Managed by {{ row.managed_by }}<br />
                 <b>Telephone:</b> {{ row.telephone }} <br />
                 <b>Ramp Type:</b> {{ row.ramp_type }}<br />
@@ -44,8 +45,8 @@
                 {% if row.dump_station == 'yes' %}
                     <div><img src='{{ STATIC_URL }}img/ombf_icons/dump_station_small.png' valign='middle' />Waste Oil Tanks</div>
                 {% endif %}
-                </div>
-            </description>';
+                </div>]]>
+            </description>
             <styleUrl>#facility</styleUrl>
             {{ row.kml|safe }}
         </Placemark>

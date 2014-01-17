@@ -7,29 +7,78 @@
 <script type="text/javascript" src="{{ STATIC_URL }}js/purl.js"></script>
 <script type="text/javascript">
 $(document).ready(function(){
+    // initialize the tabs on the map
     $('#pull-out-tabs').arcTabs();
+
+    // when a lake is clicked on the map
     $('#map').on("lake:selected", function(e, extras){
         var feature = extras.feature;
         var attrs = feature.attributes;
+        var reachcode = attrs.id
+        // click the right tab so the content area is exposed
         $('#pull-out-tabs a[href="#info-panel-lake"]').click();
+        // show the loading bar, and hide any existing content on the tab 
         $('#lake-loading').show();
         $('#lake-content').html("")
-        $.get('/maps/panel/' + attrs.id, function(html){
+        // fetch the lake data, show the content and hide the loading bar
+        $.get('/maps/panel/' + reachcode, function(html){
             $('#lake-content').html(html)
             $('#lake-loading').hide();
         });
     });
 
+    // when a search is performed
     $('#search-form').submit(function(e){
         e.preventDefault();
-        console.log($(this).serialize());
+        // hide any existing search content and show the loading bar
         $('#search-loading').show();
         $('#search-content').html("")
+        // query the server for the results
         $.get('{% url 'map-search' %}', $(this).serialize(), function(html){
+            // display the results and hide the loading bar
             $('#search-content').html(html);
             $('#search-loading').hide();
         });
     });
+
+
+    // when a search result is clicked
+    $('#search-content').on('click', '.zoom-to-view', function(e){
+        e.preventDefault();
+        var that = $(this);
+        MAP.zoomToExtent(new OpenLayers.Bounds(that.data('minx'), that.data('miny'), that.data('maxx'), that.data('maxy')), true);
+        $('#map').trigger("lake:selected", {feature: {attributes: {id: that.data('reachcode')}}});
+    });
+
+    // when the expand link on lake detail panel is clicked
+    var original_height = null;
+    $('#lake-content').on('click', '#expand-body', function(e){
+        e.preventDefault();
+        original_height = $('.body-spoiler').css("max-height");
+        $('.body-spoiler').animate({
+            'max-height': '100000px', // expand a lot
+        }, 1000).css("height", 'auto');
+        $('#collapse-body').show();
+        $('#body-wrapper .fadeout').hide();
+        $(this).hide();
+    });
+
+    // when the collapse link on a lake detail panel is clicked
+    $('#lake-content').on('click', '#collapse-body', function(e){
+        e.preventDefault();
+        $('.body-spoiler').animate({
+            'height': original_height, // expand a lot
+            'max-height': original_height, // expand a lot
+        }, 1000);
+        $('#expand-body').show();
+        $('#body-wrapper .fadeout').show();
+        $(this).hide();
+    });
+
+    // if there is a query parameter specify the reachcode, click that lake
+    if($.url().param("reachcode")){
+        $('#map').trigger("lake:selected", {feature: {attributes: {id: $.url().param("reachcode")}}});
+    }
 });
 </script>
 

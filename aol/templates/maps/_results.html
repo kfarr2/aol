@@ -7,7 +7,7 @@
     <tbody>
         {% for lake in lakes %}
             <tr>
-                <td><a class="zoom-to-view" data-reachcode="{{ lake.reachcode }}" data-minx="{{ lake.bounding_box.0 }}" data-miny="{{ lake.bounding_box.1 }}" data-maxx="{{ lake.bounding_box.2 }}" data-maxy="{{ lake.bounding_box.3 }}" href="#">{{ lake }} ({{ lake.reachcode }})</a></td>
+                <td><a class="zoom-to-view" data-reachcode="{{ lake.reachcode }}" data-minx="{{ lake.bounding_box.0 }}" data-miny="{{ lake.bounding_box.1 }}" data-maxx="{{ lake.bounding_box.2 }}" data-maxy="{{ lake.bounding_box.3 }}" href="{% url 'map' %}?minx={{ lake.bounding_box.0 }}&miny={{ lake.bounding_box.1 }}&maxx={{ lake.bounding_box.2 }}&maxy={{ lake.bounding_box.3 }}">{{ lake }} ({{ lake.reachcode }})</a></td>
             </tr>
             <tr>
                 <td><em>{{ lake.county_set.all|join:", "|default:"Not in Oregon" }}</em></td>
@@ -19,12 +19,3 @@
         {% endfor %}
     </tbody>
 </table>
-<script type="text/javascript">
-$(document).ready(function(){
-    $('.zoom-to-view').click(function(){
-        var that = $(this);
-        MAP.zoomToExtent(new OpenLayers.Bounds(that.data('minx'), that.data('miny'), that.data('maxx'), that.data('maxy')), true);
-        $('#map').trigger("lake:selected", {feature: {attributes: {id: that.data('reachcode')}}});
-    });
-});
-</script>

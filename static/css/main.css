@@ -317,3 +317,13 @@ p {
 #results-table td {
     padding:3px;
 }
+#collapse-body {
+    display:none;
+}
+#lake-list li {
+    padding:5px; 
+}
+.facility-info {
+    margin-top:10px;
+    font-size:12px;
+}

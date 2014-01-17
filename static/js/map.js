@@ -19,9 +19,9 @@ $(document).ready(function(){
     var map = new OpenLayers.Map('map', map_options);
     MAP = map;
     map.addLayer(layers.base);
-    map.addLayer(layers.facilities_kml);
     map.addLayer(layers.lakes_kml);
-    // when the map is moved update the lakes_kml_layer since it lazily fetches
+    map.addLayer(layers.facilities_kml);
+    // when the map is moved update the kml layers since it lazily fetches
     // the KML from the server
     map.events.register("moveend", map, function(event){
         layers.lakes_kml.protocol.params.scale = Math.round(this.getScale());
@@ -31,16 +31,31 @@ $(document).ready(function(){
         layers.facilities_kml.protocol.params.scale = Math.round(this.getScale());
         layers.facilities_kml.protocol.params.bbox_limited = this.getExtent().toBBOX();
         layers.facilities_kml.redraw(true);
-        map.setLayerIndex(layers.facilities_kml, 99);
     })
 
+    // when the lake kml is clicked notify the map
     layers.lakes_kml.events.register("featureselected", layers.lakes_kml_layer, function(evt){
         var feature = this.selectedFeatures[0];
         $('#map').trigger('lake:selected', {feature: feature});
     });
 
+    // render a popup window when a facility is clicked
+    var popup = null;
+    layers.facilities_kml.events.register("featureselected", layers.facilities_kml, function(event){
+        var feature = this.selectedFeatures[0];
+        if(popup) map.removePopup(popup);
+        map.addPopup(popup = new OpenLayers.Popup.FramedCloud(
+            "foo",
+            event.feature.geometry.getBounds().getCenterLonLat(),
+            null,
+            event.feature.attributes.description,
+            null,
+            true
+        ));
+    });
+
     // make the KML layers clickable
-    var control = new OpenLayers.Control.SelectFeature([layers.lakes_kml])
+    var control = new OpenLayers.Control.SelectFeature([layers.lakes_kml, layers.facilities_kml])
     // this allows the map to be dragged when the mouse is down on one of this
     // layer's items
     control.handlers.feature.stopDown = false;

@@ -10,7 +10,7 @@
     <div class="clear"></div>
 
     {% if letter %}
-        <ul class='wrap'>
+        <ul id="lake-list">
             {% for lake in lakes %}
                 <li class="{% cycle 'odd' 'even' %}" ><a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">{{ lake }}</a> (<em>{{ lake.counties }}</em>)</li>
             {% endfor %}
