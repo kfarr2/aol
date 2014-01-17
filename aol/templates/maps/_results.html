@@ -1,0 +1,29 @@
+<table id="results-table">
+    <thead>
+        <tr>
+            <th>View</th>
+            <th>Name &amp; Reachcode</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for lake in lakes %}
+            <tr>
+                <td><a class="zoom-to-view" data-reachcode="{{ lake.reachcode }}" data-minx="{{ lake.bounding_box.0 }}" data-miny="{{ lake.bounding_box.1 }}" data-maxx="{{ lake.bounding_box.2 }}" data-maxy="{{ lake.bounding_box.3 }}" href="#">View</a></td>
+                <td>{{ lake }} ({{ lake.reachcode }})</td>
+            </tr>
+            <tr>
+                <td colspan="2">{{ lake.county_set.all|join:", " }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{{ sql_queries }}
+<script type="text/javascript">
+$(document).ready(function(){
+    $('.zoom-to-view').click(function(){
+        var that = $(this);
+        MAP.zoomToExtent(new OpenLayers.Bounds(that.data('minx'), that.data('miny'), that.data('maxx'), that.data('maxy')), true);
+        $('#map').trigger("lake:selected", {feature: {attributes: {id: that.data('reachcode')}}});
+    });
+});
+</script>

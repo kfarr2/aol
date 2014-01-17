@@ -299,5 +299,18 @@ p {
     display:inline;
 }
 #search-content {
-
+    border-spacing:0;
+}
+#results-table tbody tr:nth-child(4n-1) {
+    background-color:#efefef;
+}
+#results-table tbody tr:nth-child(4n) {
+    background-color:#efefef;
+}
+#results-table {
+    font-size:14px;
+    border-spacing:none;
+}
+#results-table td {
+    padding:3px;
 }

@@ -37,6 +37,6 @@ def panel(request, reachcode):
 
 def search(request):
     query = request.GET.get("query", "")
-    lakes = NHDLake.objects.filter(Q(gnis_name__icontains=query) | Q(title__icontains=query) | Q(gnis_id__icontains=query) | Q(reachcode__icontains=query))[:100]
+    lakes = NHDLake.objects.filter(Q(gnis_name__icontains=query) | Q(title__icontains=query) | Q(gnis_id__icontains=query) | Q(reachcode__icontains=query)).prefetch_related("county_set")[:100]
     return render(request, "maps/_results.html", {"lakes": lakes})
 
