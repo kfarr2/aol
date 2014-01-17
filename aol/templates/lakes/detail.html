@@ -3,7 +3,9 @@
 <div class='wrap block'>
 	<div class='span8 block'>
         <h1>{{ lake }} <em>({{ lake.counties }})</em></h1>
-        <p>Reachcode: {{ lake.reachcode }}</p>
+        <p>
+            Reachcode: {{ lake.reachcode }} | <a href="{% url 'map' %}?minx={{ lake.bounding_box.0 }}&miny={{ lake.bounding_box.1 }}&maxx={{ lake.bounding_box.2 }}&maxy={{ lake.bounding_box.3 }}&reachcode={{ lake.reachcode }}">View on Interactive Map</a>
+        </p>
         <div class="lake-body">
             {% if lake.body %}
                 {{ lake.body|safe }}
