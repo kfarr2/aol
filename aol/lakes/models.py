@@ -15,13 +15,16 @@ SQLCompiler.quote_name_unless_alias = lambda self, name: name if name.strip().st
 
 class NHDLakeManager(models.Manager):
     def important_lakes(self, starts_with=None):
+        name_column = "COALESCE(NULLIF(title, ''), gnis_name)"
+        alphabetic_name_column = "regexp_replace(%s, '^[lL]ake\s*', '')" % name_column
+
         where_clause = ""
         where_params = {}
         if starts_with:
-            where_clause = " AND (lower(gnis_name) LIKE %(starts_with)s OR lower(title) LIKE %(starts_with)s OR lower(regexp_replace(COALESCE(NULLIF(title, ''), gnis_name), '^[lL]ake\s*', '')) LIKE %(starts_with)s) "
+            where_clause = " AND (lower(" + name_column + ") LIKE %(starts_with)s OR lower(" + alphabetic_name_column + ") LIKE %(starts_with)s )"
             where_params = {"starts_with": starts_with.lower() + "%"}
 
-        results = self.raw("""
+        results = self.raw(("""
         SELECT 
             reachcode, 
             permanent_id,
@@ -41,7 +44,7 @@ class NHDLakeManager(models.Manager):
             fishing_zone_id, 
             huc6_id,
             array_to_string(array_agg(county.altname ORDER BY county.altname), ', ') AS counties,
-            regexp_replace(COALESCE(NULLIF(title, ''), gnis_name), '^[lL]ake\s*', '') AS alphabetic_title
+            """ + alphabetic_name_column + """ AS alphabetic_title
             --body
         FROM 
             nhd
@@ -63,8 +66,7 @@ class NHDLakeManager(models.Manager):
             SELECT reachcode FROM "nhd" WHERE aol_page IS NOT NULL
         ) %(where_clause)s
         GROUP BY reachcode, permanent_id, fdate, ftype, fcode, shape_length, shape_area, resolution, gnis_id, gnis_name, area_sq_km, parent, aol_page,  elevation, title, fishing_zone_id, huc6_id
-        ORDER BY COALESCE(NULLIF(title, ''), gnis_name)
-        """ % {"where_clause": where_clause}, where_params)
+        ORDER BY """ + name_column) % {"where_clause": where_clause}, where_params)
 
         return results
 
