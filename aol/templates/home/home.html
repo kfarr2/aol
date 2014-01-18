@@ -1,48 +1,16 @@
 {% extends "main.html" %}
 {% block content %}
-	<div id='home-row1' class='span12 block'>
-		<div class='left span5'>
-			<div id='r1c1' class='wrap'>
-			<h2>Welcome</h2>
-				<p>Oregon has a rich diversity of lakes and reservoirs ranging from some of the clearest lakes in the world, to extremely productive fisheries, to lakes in trouble from pollution. Lakes and reservoirs are very important to the citizens of Oregon as they provide drinking water, flood control, irrigation, power generation, and recreational opportunities such as swimming, boating, fishing, and relaxation.
-				</p>
-				<p>The Atlas of Oregon Lakes is a resource for the public, resource management agencies, and scientists to better manage and enjoy our lakes. The online atlas is an updated version of the popular <i>Atlas of Oregon Lakes</i> published in 1985 by the Oregon State University Press. 
-				</p>
-				<a href="/about"> Learn more about the atlas and its contributors »</a>
-			</div>
-			</div>
-		<div class ='right span7'>
-			<div class='wrap'>
-				<img src="/media/photos/thumbnail-DEQ_AOL-0053.jpg">
-				<p>If you would like your photos of Oregon lakes featured in the online atlas, <a href="/photo-submissions">click here</a> for submission criteria.
-				</p>
-			</div>
-		</div>	
-	</div>
-	<div id='home-row2' class='span12 block'>
-		<div id='r2c1' class='left span4'>
-			<div class='wrap'>
-			<h2>Atlas Features</h2>
-			<p>In addition to the comprehensive information in the 1985 print version, the online Atlas of Oregon lakes features updated information, more data types, and interactive functionality not possible through a print source, such as links to marine facilities information, water quality graphs, photographs, and downloadable data. All of these features are available through the interactive map as well as within each lake's page.</p>
-		</div>
-		</div>
-		<div class ='right span8'>
-		<div id='r2c2' class='wrap'>
-			<div class='span2'>
-				<img src="{{STATIC_URL }}img/lake_1.jpg">
-			</div>
-			<div class='span9 block wrap'>
-				<h2>Individual Lakes Pages</h2>
-				<p>Discover the rich diversity of Oregon’s lakes—learn about the current and historical topography, environmental relationships, and recreational and practical uses. View photos, water quality plots, and download resources including the original 1985 print atlas pages.</p>
-			</div>
-			<div class='span2'>
-				<img src="{{ STATIC_URL }}img/map_1.png">
-			</div>
-			<div class='span9 block wrap'>
-				<h2> Interactive Map</h2>
-				<p>Explore Oregon’s lakes using this easy to navigate tool. You can view the map from either a naturalistic or landownership perspective. Click lakes on the map or search by name in the Lake List to find statistics and links to more information.</p>
-			</div>
-		</div>
-		</div>
-	</div>
+	<div id='home-row1' class='block'>
+	<img width='100%' src='{{STATIC_URL}}/img/aol_home_img.png' />
+    <div id='home-overlay'></div>
+    <div id='home-label'>
+      Atlas of Oregon Lakes
+      <div id='home-map-link'>
+        <a href="{% url 'map' %}">Interactive Map &raquo;</a>
+      </div>
+    </div>
+
+    </div>
+    <div id='home-footer'>Center for Lakes & Reservoirs | Center for Spatial Analysis & Research | College of Urban & Public Affairs | Academic & Research Computing | Oregon Department of Environmental Quality
+    <br>© 1985-2013 Atlas of Oregon Lakes. For technical support contact us</div>
 {% endblock %}
