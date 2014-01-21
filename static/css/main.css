@@ -30,7 +30,7 @@ a {
 }
 a:visited { color: #666; }
 a:hover {
-    color: #086782
+    color: #086782;
     text-decoration: underline;
 }
 input { font-size: 16px }
