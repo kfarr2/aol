@@ -1,25 +1,22 @@
 {% extends "base.html" %}
 {% block body %}
-
-    {% block header %}{% include "header.html"%}{% endblock %} 
-	<div id='content' class='max'>
-        {% if messages %}
-            <ul class="messages">
+        {% block header %}{% include "header.html"%}{% endblock %} 
+        <div id='content' class="container">
+            {% if messages %}
                 {% for message in messages %}
-                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    <div {% if message.tags %} class="alert alert-{{ message.tags }}"{% endif %}>{{ message }}</div>
                 {% endfor %}
-            </ul>
-        {% endif %}
+            {% endif %}
 
-        {% block content %}{% endblock %}
-	</div>
-    {% block footer %}
-        {% if sql_queries %} 
-            {% comment %}Print out all the SQL queries (only in debug mode){% endcomment %}
-            <hr />
-            {% for item in sql_queries %}
-                {{ item.sql }}
-            {% endfor %}
-        {% endif %}
-    {% endblock %}
+            {% block content %}{% endblock %}
+        </div>
+        {% block footer %}
+            {% if sql_queries %} 
+                {% comment %}Print out all the SQL queries (only in debug mode){% endcomment %}
+                <hr />
+                {% for item in sql_queries %}
+                    {{ item.sql }}
+                {% endfor %}
+            {% endif %}
+        {% endblock %}
 {% endblock %}

@@ -30,6 +30,9 @@ class LakeForm(forms.ModelForm):
             'huc6',
             'county_set',
         )
+        widgets = {
+            "body": forms.widgets.Textarea(attrs={"class": "ckeditor"})
+        }
 
 class DeletableModelForm(forms.ModelForm):
     """

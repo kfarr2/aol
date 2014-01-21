@@ -1,0 +1,8 @@
+{% if form.errors %}
+    <div class="alert alert-danger">
+        Please correct the error(s) below
+    </div>
+{% endif %}
+{% for field in form %}
+    {% include "_field.html" with field=field %}
+{% endfor %}

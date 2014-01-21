@@ -1,8 +1,9 @@
 {% extends "main.html" %}
 {% block content %}
+<h2>Add/Edit Document</h2>
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    {{ form }}
+    {% include "_form.html" %}
     <input type="submit" name="submit" value="submit" />
 </form>
 

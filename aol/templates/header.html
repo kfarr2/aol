@@ -1,25 +1,26 @@
 {% block header %}
-<div id='header-wrap' class='max'>
-	<div id='header' class='span12 block'>
-		<div id='branding' class='block left span8' >
-			<div id='logo-wrap' class='block span2 left' >
-				<a href='/'>
-                    <img id='logo' src='{{ STATIC_URL }}img/aol_logo.png' ></img>
-                </a>
-			</div>
-			<div id='site-title' class='block span9 left' >
-				<a href='/'>Atlas of Oregon Lakes</a>
-			</div>	
-			<div id='navigation' class='block'>
-				{% block navigation %}{% include 'navigation.html'%}{% endblock %}
-			</div>
-		</div>
-		<div id='search-container' class='span4 block right'>
-			<form action='/search/' method='get'>
-                <input type='text' name='q'></input>
-			    <input type='submit' value='Lake Search'></input>
-		    </form>
-        </div>
-	</div>	
+<div id='header-wrap'>
+    <div class='col-md-12'>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 col-sm-8">
+                    <a href='/' id="site-title"><img id='logo' src='{{ STATIC_URL }}img/aol_logo.png' > Atlas of Oregon Lakes</a>
+                </div>
+
+                <div class="col-md-4 col-sm-4" id="header-search">
+                    <form action='/search/' method='get'>
+                        <input type='text' name='q'></input>
+                        <input type='submit' value='Lake Search'></input>
+                    </form>
+                </div>
+            </div>
+            <div class="row">
+                <div id='navigation' class="col-md-12">
+                    {% block navigation %}{% include 'navigation.html'%}{% endblock %}
+                </div>
+            </div>
+        </div>	
+    </div>
+    <div class="clear"></div>
 </div>
 {% endblock %}

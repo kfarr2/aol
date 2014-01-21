@@ -31,11 +31,11 @@ urlpatterns = patterns('',
 
     # admin area
     url(r'^admin/?$', customadmin.listing, name='admin-listing'),
-    url(r'^admin/edit/lake/(?P<lake_id>\d+)?$', customadmin.edit_lake, name='admin-edit-lake'),
+    url(r'^admin/edit/lake/(?P<reachcode>\d+)?$', customadmin.edit_lake, name='admin-edit-lake'),
     url(r'^admin/edit/photo/(?P<photo_id>\d+)?$', customadmin.edit_photo, name='admin-edit-photo'),
-    url(r'^admin/add/photo/(?P<lake_id>\d+)?$', customadmin.edit_photo, name='admin-add-photo'),
+    url(r'^admin/add/photo/(?P<reachcode>\d+)?$', customadmin.edit_photo, name='admin-add-photo'),
     url(r'^admin/edit/document/(?P<document_id>\d+)?$', customadmin.edit_document, name='admin-edit-document'),
-    url(r'^admin/add/document/(?P<lake_id>\d+)?$', customadmin.edit_document, name='admin-add-document'),
+    url(r'^admin/add/document/(?P<reachcode>\d+)?$', customadmin.edit_document, name='admin-add-document'),
     url(r'^admin/add/plants?$', customadmin.add_plant, name='admin-add-plant'),
     
     # login logout

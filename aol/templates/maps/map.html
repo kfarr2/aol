@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+{% block head %}
+    <link href="{{ STATIC_URL }}css/map.css" rel="stylesheet">
+{% endblock %}
 {% block body %}
 <script type="text/javascript" src="{{ STATIC_URL }}/js/OpenLayers/OpenLayers.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}/js/proj4js.js"></script>
@@ -7,9 +10,6 @@
 <script type="text/javascript" src="{{ STATIC_URL }}js/purl.js"></script>
 <script type="text/javascript">
 $(document).ready(function(){
-    // initialize the tabs on the map
-    $('#pull-out-tabs').arcTabs();
-
     // when a lake is clicked on the map
     $('#map').on("lake:selected", function(e, extras){
         var feature = extras.feature;
@@ -83,9 +83,9 @@ $(document).ready(function(){
 </script>
 
 <ul id="pull-out-tabs">
-    <li><a href="#info-panel-legend" class="tab">Legend</a></li>
-    <li><a href="#info-panel-search" class="tab">Search</a></li>
-    <li><a href="#info-panel-lake" class="tab">Lake</a></li>
+    <li class="active"><a data-toggle="tab" href="#info-panel-legend" class="tab">Legend</a></li>
+    <li><a data-toggle="tab" href="#info-panel-search" class="tab">Search</a></li>
+    <li><a data-toggle="tab" href="#info-panel-lake" class="tab">Lake</a></li>
 </ul>
 
 <div id="map"></div>
@@ -93,16 +93,15 @@ $(document).ready(function(){
     <div id="small-header">
         <a href='/'><img id='logo' src='{{ STATIC_URL }}img/aol_logo.png' />Atlas of Oregon Lakes</a>
     </div>
-    <div id="info-panel">
-
-        <div id="info-panel-lake">
+    <div id="info-panel" class="tab-content">
+        <div id="info-panel-lake" class="tab-pane">
             <div id="lake-content">
                 <p>Click a lake on the map to view information about it.</p>
             </div>
             <div id="lake-loading"><img src="{{ STATIC_URL }}img/ajax-loader.gif" /></div>
         </div>
 
-        <div id="info-panel-search">
+        <div id="info-panel-search" class="tab-pane">
             <label>Enter the name of a lake, its reachcode or GNIS ID:</label>
             <form method="get" action="" id="search-form">
                 <input type="text" value="" name="query" />
@@ -112,7 +111,7 @@ $(document).ready(function(){
             <div id="search-content"></div>
         </div>
 
-        <div id="info-panel-legend">
+        <div id="info-panel-legend" class="tab-pane active">
             <table>
                 <tr>
                     <td><img src="/static/img/legend/icon1.png"></td>

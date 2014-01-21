@@ -1,32 +1,36 @@
 {% extends "main.html" %}
 {% block content %}
-<aside>
-    <h4>Assets</h4>
-    <h5>Photos</h5>
-    <a href="{% url 'admin-add-photo' lake_id=lake.pk %}">Add</a>
-    {% if photos %}
-        <ul>
-            {% for photo in photos %}
-                <li><a href="{% url 'admin-edit-photo' photo_id=photo.pk %}">{{ photo.pk }} - {{ photo.caption }}</a></li>
-            {% endfor %} 
-        </ul>
-    {% endif %}
+<script type="text/javascript" src="{{ STATIC_URL }}ckeditor/ckeditor.js"></script>
+<h2>Edit Lake</h2>
+<div class="row">
+    <div class="col-md-8">
+        <form method="post">
+            {% csrf_token %}
+            {% include "_form.html" %}
+            <input type="submit" name="submit" value="submit" />
+        </form>
+    </div>
 
-    <h5>Documents</h5>
-    <a href="{% url 'admin-add-document' lake_id=lake.pk %}">Add</a>
-    {% if documents %}
-        <ul>
-            {% for document in documents %}
-                <li><a href="{% url 'admin-edit-document' document_id=document.pk %}">{{ document.pk }} - {{ document.name }}</a></li>
-            {% endfor %} 
-        </ul>
-    {% endif %}
-</aside>
+    <div class="col-md-4">
+        <h3>Assets</h3>
+        <h4>Photos <a href="{% url 'admin-add-photo' reachcode=lake.pk %}">(Add)</a></h4> 
+        {% if photos %}
+            <ul>
+                {% for photo in photos %}
+                    <li><a href="{% url 'admin-edit-photo' photo_id=photo.pk %}">{{ photo.pk }} - {{ photo.caption }}</a></li>
+                {% endfor %} 
+            </ul>
+        {% endif %}
 
-<form method="post">
-    {% csrf_token %}
-    {{ form }}
-    <input type="submit" name="submit" value="submit" />
-</form>
+        <h4>Documents <a href="{% url 'admin-add-document' reachcode=lake.pk %}">(Add)</a></h4>
+        {% if documents %}
+            <ul>
+                {% for document in documents %}
+                    <li><a href="{% url 'admin-edit-document' document_id=document.pk %}">{{ document.pk }} - {{ document.name }}</a></li>
+                {% endfor %} 
+            </ul>
+        {% endif %}
+    </div>
+</div>
 
 {% endblock %}

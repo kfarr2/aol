@@ -1,21 +1,23 @@
-<table id="results-table">
-    <thead>
-        <tr>
-            <th>Results</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for lake in lakes %}
+{% if lakes %}
+    <table id="results-table" class="table table-condensed table-striped">
+        <thead>
             <tr>
-                <td><a class="zoom-to-view" data-reachcode="{{ lake.reachcode }}" data-minx="{{ lake.bounding_box.0 }}" data-miny="{{ lake.bounding_box.1 }}" data-maxx="{{ lake.bounding_box.2 }}" data-maxy="{{ lake.bounding_box.3 }}" href="{% url 'map' %}?minx={{ lake.bounding_box.0 }}&miny={{ lake.bounding_box.1 }}&maxx={{ lake.bounding_box.2 }}&maxy={{ lake.bounding_box.3 }}">{{ lake }} ({{ lake.reachcode }})</a></td>
+                <th>Results</th>
             </tr>
-            <tr>
-                <td><em>{{ lake.county_set.all|join:", "|default:"Not in Oregon" }}</em></td>
-            </tr>
-        {% empty %}
-            <tr>
-                <td>No matching lakes found!</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            {% for lake in lakes %}
+                <tr>
+                    <td>
+                        <a class="zoom-to-view" data-reachcode="{{ lake.reachcode }}" data-minx="{{ lake.bounding_box.0 }}" data-miny="{{ lake.bounding_box.1 }}" data-maxx="{{ lake.bounding_box.2 }}" data-maxy="{{ lake.bounding_box.3 }}" href="{% url 'map' %}?minx={{ lake.bounding_box.0 }}&miny={{ lake.bounding_box.1 }}&maxx={{ lake.bounding_box.2 }}&maxy={{ lake.bounding_box.3 }}">{{ lake }} ({{ lake.reachcode }})</a><br />
+                        <em>{{ lake.county_set.all|join:", "|default:"Not in Oregon" }}</em>
+                    </td>
+            {% empty %}
+                <tr>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <div class="alert alert-warning">No matching lakes found!</div>
+{% endif %}

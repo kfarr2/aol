@@ -14,8 +14,50 @@ _quote_name_unless_alias = SQLCompiler.quote_name_unless_alias
 SQLCompiler.quote_name_unless_alias = lambda self, name: name if name.strip().startswith('(') else _quote_name_unless_alias(self, name)
 
 class NHDLakeManager(models.Manager):
+    def get_query_set(self):
+        """
+        We only want to return lakes that are coded as LakePond or Reservoir
+        which have the types 390, 436 in the NHD. See
+        http://nhd.usgs.gov/NHDv2.0_poster_6_2_2010.pdf
+
+        We also only want to get lakes with counties specified since some NHD
+        lakes are outside Oregon
+        """
+        sql = """
+            (SELECT 
+                lake_county.reachcode, 
+                array_to_string(array_agg(county.altname ORDER BY county.altname), ', ') AS counties
+            FROM lake_county INNER JOIN county USING(county_id)
+            GROUP BY lake_county.reachcode
+            ) counties
+        """
+        qs = super(NHDLakeManager, self).get_query_set().filter(ftype__in=[390, 436])
+        qs = qs.extra(
+            select={"counties": "counties.counties"},
+            tables=[sql],
+            where=["counties.reachcode = nhd.reachcode"]
+        )
+        return qs
+
+    def search(self, query, limit=100):
+        """
+        This searches all the NHDLake objects with a gnis_name, title, gnis_id
+        or reachcode containing the particular query keyword
+        """
+        qs = NHDLake.objects.filter(Q(gnis_name__icontains=query) | Q(title__icontains=query) | Q(gnis_id__icontains=query) | Q(reachcode__icontains=query))
+        if limit:
+            qs = qs[:limit]
+        return qs
+
     def important_lakes(self, starts_with=None):
+        """
+        Important lakes are ones that appear in the original AOL, or have
+        lake_plant, document, or photos attached to them. These lakes appear on
+        the alphabetical index of lakes on the site
+        """
+        # for the name of a lake, either use the title (from the original AOL) or the gnis_name
         name_column = "COALESCE(NULLIF(title, ''), gnis_name)"
+        # for the alphabetic name, replace "Lake Blah" with just "Blah"
         alphabetic_name_column = "regexp_replace(%s, '^[lL]ake\s*', '')" % name_column
 
         where_clause = ""
@@ -48,9 +90,9 @@ class NHDLakeManager(models.Manager):
             --body
         FROM 
             nhd
-        LEFT JOIN
+        INNER JOIN
             lake_county USING(reachcode)
-        LEFT JOIN
+        INNER JOIN
             county USING(county_id)
         WHERE reachcode IN(
             -- get all reachcodes for lakes with plants
@@ -98,6 +140,7 @@ class NHDLakeManager(models.Manager):
 
         return qs
 
+
 class NHDLake(models.Model):
     reachcode = models.CharField(max_length=32, primary_key=True)
     title = models.CharField(max_length=255)
@@ -117,7 +160,7 @@ class NHDLake(models.Model):
     body = models.TextField()
 
     fishing_zone = models.ForeignKey('FishingZone', null=True)
-    huc6 = models.ForeignKey('HUC6', null=True)
+    huc6 = models.ForeignKey('HUC6', null=True, blank=True)
     county_set = models.ManyToManyField('County', through="LakeCounty")
     plants = models.ManyToManyField('Plant', through="LakePlant")
 
@@ -274,7 +317,6 @@ class NHDLake(models.Model):
             results.append(row[0])
 
         return ", ".join(results)
-
 
 
 class LakeGeom(models.Model):

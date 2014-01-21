@@ -1,0 +1,21 @@
+{% comment %}This is a basic template for a bootstrap ready form field{% endcomment %}
+<div class="form-group">
+    {% if field.is_checkbox %}
+        <div class=" {{ field.error_class }}">
+            <label class="control-label checkbox">{{ field }} {{ field.label }}{% if field.field.required %}*{% endif %}</label>
+            {{ field.errors }}
+        </div>
+    {% else %}
+        <div class=" {{ field.error_class }}">
+            <label class="control-label" for="{{ field.id_for_label }}" style="display:block">{{ field.label|safe }}{% if field.field.required %}*{% endif %}
+                {% if field.help_text and tooltip_help %}<a href=# title="{{field.help_text}}"><i class='glyphicon glyphicon-question-sign'></i></a>{% endif%}</label>
+            {{ field.errors }}
+            {{ field }}
+        </div>
+    {% endif %}
+    {% if not tooltip_help %}
+        {% if field.help_text %}
+        <p class="help-block">{{ field.help_text }}</p>
+        {% endif %}
+    {%endif %}
+</div> 

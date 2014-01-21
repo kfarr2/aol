@@ -3,17 +3,17 @@
 <div class= 'wrap' >
 	<h2>Search Results for: <i>{{ query }}</i></h2>
     
-    <form class='wrap' ction='/search/' method='get'>
-        <input type='text' name='q' value= {{ query }} autofocus></input>
-        <input type='submit' value='Lake Search'></input>
+    <form class='wrap' method='get'>
+        <input type='text' name='q' value="{{ query }}" autofocus />
+        <input type='submit' value='Lake Search' />
     </form>
-    {% if error %}
+    {% if lakes.count == 0 %}
         <p class='wrap' style="color: red;">Sorry, no lakes were found.</p>
     {% endif %}	
-    <ol class='wrap'>
-		{% for lake in lakes %}
-			<li class="{% cycle 'odd' 'even' %}" ><a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">{{ lake.title }}</a> (<em>{{ lake.counties }}</em>)</li>
-		{% endfor %}
+    <ol id="lake-list" class="wrap">
+        {% for lake in lakes %}
+            <li class="{% cycle 'odd' 'even' %}" ><a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">{{ lake }}</a> (<em>{{ lake.counties }}</em>)</li>
+        {% endfor %}
 	</ol>
 </div>
 {% endblock %}

@@ -1,23 +1,24 @@
-<div class'tab-wrap'>
-    <ul class='tabs' id="lake-tabs">
-        <li><a class='tab' title='maps' href='#maps'>Maps</a></li>
-        <li><a class='tab' title='plants' href='#plants'>Plants</a></li>
-        <li><a class='tab' title='mussels' href='#mussels'>Mussels</a></li>
-        <li><a class='tab' title='other-information' href='#other-information'>Documents</a></li>
-        <li><a class='tab' title='photos' href='#photos'>Photos</a></li>
-    </ul>
-    <div id='maps' class='aside'>
+<ul class='nav nav-tabs'>
+    <li class="active"><a data-toggle="tab" title='maps' href='#maps'>Maps</a></li>
+    <li><a data-toggle="tab" title='plants' href='#plants'>Plants</a></li>
+    <li><a data-toggle="tab" title='mussels' href='#mussels'>Mussels</a></li>
+    <li><a data-toggle="tab" title='other-information' href='#other-information'>Documents</a></li>
+    <li><a data-toggle="tab" title='photos' href='#photos'>Photos</a></li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane active" id='maps'>
         <p><strong>Area:</strong> {{ lake.area|floatformat }} acres | <strong>Shoreline:</strong> {{ lake.perimeter|floatformat }} mi</p>
         {% if lake.watershed_tile_url %}
-            <div id='watershed' class='lake-watershed map lake-map'>
-                <h2>Watershed</h2>
+            <div id='watershed' class='lake-watershed lake-map'>
+                <h4>Watershed</h4>
                 <img src="{{ lake.watershed_tile_url }}" /> 
             </div>
         {% endif %}
 
         {% if lake.basin_tile_url %}
-            <div id='basin' class='lake-waterbasin map lake-map'>
-                <h2>Basin</h2>
+            <div id='basin' class='lake-waterbasin lake-map'>
+                <h4>Basin</h4>
                 <img src="{{ lake.basin_tile_url }}" />
             </div>
         {% endif %}
@@ -33,15 +34,15 @@
         </select>
     </div>
 
-    <div class="mussels aside" id='mussels'>
+    <div class="tab-pane" id='mussels'>
         {% if lake.mussels %}
             {{ lake.mussels }}
         {% else %}
-            <p>No mussel data available.</p>
+            <div class="alert alert-warning">No mussel data available.</div>
         {% endif %}
     </div>
 
-    <div class="plants aside" id='plants'>
+    <div class="tab-pane" id='plants'>
         {% if plants %}
             <ul>
                 {% for plant in plants %}
@@ -49,10 +50,11 @@
                 {% endfor %}
             </ul>
         {% else %}  
-            <p>No plant data available.</p>
+            <div class="alert alert-warning">No plant data available.</div>
         {% endif %}
     </div>
-    <div class='other-information aside' id='other-information'>
+
+    <div class='tab-pane' id='other-information'>
         {% if documents %}
             <ul>
                 {% for doc in documents %}
@@ -60,10 +62,10 @@
                 {% endfor %}
             </ul>
         {% else %}
-            <p>No documents available.</p>
+            <div class="alert alert-warning">No documents available.</div>
         {% endif %}
     </div>
-    <div id='photos' class="aside">
+    <div id='photos' class="tab-pane">
         {% if photos %}
             <div id='photo-wrap'>
                 {% for photo in photos %}
@@ -72,23 +74,21 @@
                     </div>
                 {% endfor %}
             </div>
-            <div id='previous' class='block'><img src='{{ STATIC_URL }}img/prev.png'></div>
-            <div id='next' class='block'><img src='{{ STATIC_URL }}img/next.png'></div>
-            <div id='numphotos' class='block'>0/0</div>
+            <span id='previous'><img src='{{ STATIC_URL }}img/prev.png'></span>
+            <span id='next'><img src='{{ STATIC_URL }}img/next.png'></span>
+            <span id='numphotos'>0/0</span>
         {% else %}
-            <p>No photos available.</p>
+            <div class="alert alert-warning">No photos available.</div>
             <p>If you would like your photos of Oregon lakes featured in the online atlas, <a href="/photo-submissions">click here</a> for submission criteria.</p>
         {% endif %}
     </div>
 </div>
 <script type='text/javascript'>
     $(document).ready(function(){
-        $('#lake-tabs').arcTabs();
-
         //map select    
         $('.lake-map:not(:first)').hide();
         $('#map-select').change(function(){
-            $('.map').hide(); 
+            $('.lake-map').hide(); 
             $(this.value).show();
         });
         //slideshow 

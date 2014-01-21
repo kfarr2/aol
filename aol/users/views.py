@@ -9,15 +9,21 @@ from .forms import DocumentForm, LakeForm, PhotoForm, PlantForm
 @login_required
 def listing(request):
     """List all the lakes that the admin can edit"""
-    lakes = NHDLake.objects.all()
+    q = request.GET.get('q','')
+    if "q" in request.GET:
+        lakes = NHDLake.objects.search(query=q)
+    else:
+        lakes = None
+
     return render(request, "admin/listing.html", {
         "lakes": lakes,
+        "q": q,
     })
 
 @login_required
-def edit_lake(request, lake_id):
+def edit_lake(request, reachcode):
     """The edit page for a lake"""
-    lake = get_object_or_404(NHDLake, lake_id=lake_id)
+    lake = get_object_or_404(NHDLake, reachcode=reachcode)
     if request.POST:
         form = LakeForm(request.POST, instance=lake)
         if form.is_valid():
@@ -38,17 +44,17 @@ def edit_lake(request, lake_id):
     })
 
 @login_required
-def edit_photo(request, lake_id=None, photo_id=None):
+def edit_photo(request, reachcode=None, photo_id=None):
     """
     The add/edit page for a photo. If a photo_id is passed in, we edit. If the
-    lake_id is passed in, we create
+    reachcode is passed in, we create
     """
     try:
         photo = Photo.objects.get(pk=photo_id)
         lake = photo.lake
     except Photo.DoesNotExist:
         # create a new photo with a foreign key to the lake
-        lake = get_object_or_404(NHDLake, pk=lake_id)
+        lake = get_object_or_404(NHDLake, reachcode=reachcode)
         photo = Photo(lake=lake)
 
     if request.POST:
@@ -67,17 +73,17 @@ def edit_photo(request, lake_id=None, photo_id=None):
     })
 
 @login_required
-def edit_document(request, lake_id=None, document_id=None):
+def edit_document(request, reachcode=None, document_id=None):
     """
     The add/edit page for a document. If a document_id is passed in, we edit. If the
-    lake_id is passed in, we create
+    reachcode is passed in, we create
     """
     try:
         document = Document.objects.get(pk=document_id)
         lake = document.lake
     except Document.DoesNotExist:
         # create a new document with a foreign key to the lake
-        lake = get_object_or_404(NHDLake, pk=lake_id)
+        lake = get_object_or_404(NHDLake, reachcode=reachcode)
         document = Document(lake=lake)
 
     if request.POST:
@@ -96,7 +102,7 @@ def edit_document(request, lake_id=None, document_id=None):
     })
 
 @login_required
-def  add_plant(request):
+def add_plant(request):
     """ 
     This page will have a textbox for user to input plant info,
     which will be delimited by Tab character.

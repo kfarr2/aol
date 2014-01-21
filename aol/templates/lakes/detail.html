@@ -1,23 +1,22 @@
 {% extends "main.html" %}
 {% block content %}
-<div class='wrap block'>
-	<div class='span8 block'>
+<div class="row">
+    <div class="col-md-7">
         <h1>{{ lake }} <em>({{ lake.counties }})</em></h1>
         <p>
             Reachcode: {{ lake.reachcode }} | <a href="{% url 'map' %}?minx={{ lake.bounding_box.0 }}&miny={{ lake.bounding_box.1 }}&maxx={{ lake.bounding_box.2 }}&maxy={{ lake.bounding_box.3 }}&reachcode={{ lake.reachcode }}">View on Interactive Map</a>
         </p>
-        <div class="lake-body">
-            {% if lake.body %}
-                {{ lake.body|safe }}
-            {% else %}
-                Check back for more information about Lake of the Woods. If you would like to contribute information about this lake, contact <a href="mailto:oregonlakesatlas@pdx.edu">oregonlakesatlas@pdx.edu</a>.
-            {% endif %}
-	    </div>
+
+        {% if lake.body %}
+            {{ lake.body|safe }}
+        {% else %}
+            Check back for more information about {{ lake }}. If you would like to contribute information about this lake, contact <a href="mailto:oregonlakesatlas@pdx.edu">oregonlakesatlas@pdx.edu</a>.
+        {% endif %}
     </div>
-        
-    <div class='lake-right span4 right'>
+            
+    <div class="col-md-5">
+        <br /><!-- lazy man's spacing -->
         {% include "lakes/_tabs.html" %}
     </div>
 </div>
-
 {% endblock %}
