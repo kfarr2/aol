@@ -1,6 +1,7 @@
 from django import forms
 from aol.lakes.models import Document, NHDLake, LakeCounty, Photo, Plant
 from django.utils.translation import ugettext as _
+from django.contrib.flatpages.forms import FlatpageForm as FPF
 
 class LakeForm(forms.ModelForm):
     def save(self, *args, **kwargs):
@@ -55,6 +56,13 @@ class DeletableModelForm(forms.ModelForm):
         else:
             super(DeletableModelForm, self).save(*args, **kwargs)
 
+class FlatPageForm(FPF, DeletableModelForm):
+    class Meta(FPF.Meta):
+        widgets = {
+            "content": forms.widgets.Textarea(attrs={"class": "ckeditor"})
+        }
+
+
 
 class DocumentForm(DeletableModelForm):
     class Meta:
@@ -82,7 +90,7 @@ class PlantForm(forms.Form):
 
     def clean(self):
         cleaned_data = super(PlantForm, self).clean()
-        data = cleaned_data.get("user_input").split('\n')
+        data = cleaned_data.get("user_input", "").split('\n')
 
         # Create a list of plant infomation output
         output = []

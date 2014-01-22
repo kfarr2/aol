@@ -1,25 +1,24 @@
 {% extends "main.html" %}
+{% block title %}Alphabetical Listing of Lakes{% endblock %}
 {% block content %}
-<div class= 'wrap' >
-	<h2>Individual Lake Pages</h2>
-    <ul class="pagination">
-        {% for a_letter in letters %}
-            <li class="{% if a_letter == letter %}active{% endif %}" ><a href="{% url 'lakes-listing' a_letter|lower %}">{{ a_letter }}</a></li>
-        {% endfor %}
-    </ul>
+<h2>Individual Lake Pages</h2>
+<ul class="pagination">
+    {% for a_letter in letters %}
+        <li class="{% if a_letter == letter %}active{% endif %}" ><a href="{% url 'lakes-listing' a_letter|lower %}">{{ a_letter }}</a></li>
+    {% endfor %}
+</ul>
 
-    {% if letter %}
-        <table class="table table-condensed table-striped">
-            {% for lake in lakes %}
-                <tr>
-                    <td><a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">{{ lake }}</a> (<em>{{ lake.counties }}</em>)</td>
-                </tr>
-            {% endfor %}
-        </table>
-    {% else %}
-        <div class="alert alert-warning">
-            Click a letter above to see a listing of lakes.
-        </div>
-    {% endif %}
-</div>
+{% if letter %}
+    <table class="table table-condensed table-striped">
+        {% for lake in lakes %}
+            <tr>
+                <td><a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">{{ lake }}</a> (<em>{{ lake.counties }}</em>)</td>
+            </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <div class="alert alert-warning">
+        Click a letter above to see a listing of lakes.
+    </div>
+{% endif %}
 {% endblock %}

@@ -1,5 +1,9 @@
 <h2>{{ lake }} <em>({{ lake.counties|default:"Not in Oregon" }})</em></h2>
-<p>Reachcode: {{ lake.reachcode }}</p>
+<p>Reachcode: {{ lake.reachcode }}
+{% if user.is_authenticated %}
+    | <a href="{% url 'admin-edit-lake' lake.reachcode %}">Edit</a>
+{% endif %}
+</p>
 
 {% if lake.body %}
     <div id="body-wrapper">

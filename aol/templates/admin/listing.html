@@ -4,21 +4,34 @@
 <h3>Plant Information</h3>
 <a href="{% url 'admin-add-plant' %}">Import Plant Information</a>
 
+<h3>Pages (<a href="{% url 'admin-add-flatpage' %}">Add</a>)</h3>
+<table>
+{% for page in flatpages %}
+    <tr>
+        <td><a href="{% url 'admin-edit-flatpage' page.pk %}">{{ page.title }}</a></td>
+    </tr>
+{% endfor %}
+</table>
+
+
 <h3>To edit a lake, search for it:</h3>
 <form method="get" action="">
     <input type="text" name="q" value="{{ q }}" autofocus />
     <input type="submit" name="submit" value="Search" />
 </form>
-
+<br />
 {% if lakes %}
     <table class="table table-condensed table-striped">
         {% for lake in lakes %}
             <tr>
-                <td><a href="{% url 'admin-edit-lake' reachcode=lake.pk %}">{{ lake }}</a> (<em>{{ lake.counties }}</em>)</td>
+                <td>
+                    <a href="{% url 'admin-edit-lake' reachcode=lake.pk %}">{{ lake }}</a> (<em>{{ lake.counties }}</em>)
+                    <br />{{ lake.reachcode }}
+                </td>
             </tr>
         {% endfor %}
     </table>
-{% else %}
+{% elif q %}
     <div class="alert alert-warning">No matching lake found</div>
 {% endif %}
 {% endblock %}

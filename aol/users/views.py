@@ -3,8 +3,9 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import render, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.flatpages.models import FlatPage
 from aol.lakes.models import NHDLake, Photo, Document, Photo, Plant 
-from .forms import DocumentForm, LakeForm, PhotoForm, PlantForm
+from .forms import DocumentForm, LakeForm, PhotoForm, PlantForm, FlatPageForm
 
 @login_required
 def listing(request):
@@ -18,6 +19,27 @@ def listing(request):
     return render(request, "admin/listing.html", {
         "lakes": lakes,
         "q": q,
+        "flatpages": FlatPage.objects.all(),
+    })
+
+@login_required
+def edit_flatpage(request, pk=None):
+    try:
+        page = FlatPage.objects.get(pk=pk)
+    except FlatPage.DoesNotExist:
+        page = None
+
+    if request.POST:
+        form = FlatPageForm(request.POST, instance=page)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Page Editied")
+            return HttpResponseRedirect(reverse("admin"))
+    else:
+        form = FlatPageForm(instance=page)
+
+    return render(request, "admin/edit_flatpage.html", {
+        "form": form,
     })
 
 @login_required

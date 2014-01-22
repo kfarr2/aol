@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block title %}Interactive Map{% endblock %}
 {% block head %}
     <link href="{{ STATIC_URL }}css/map.css" rel="stylesheet">
 {% endblock %}
@@ -41,7 +42,6 @@ $(document).ready(function(){
         });
     });
 
-
     // when a search result is clicked
     $('#search-content').on('click', '.zoom-to-view', function(e){
         e.preventDefault();
@@ -75,7 +75,7 @@ $(document).ready(function(){
         $(this).hide();
     });
 
-    // if there is a query parameter specify the reachcode, click that lake
+    // if there is a query parameter specifying the reachcode, click that lake
     if($.url().param("reachcode")){
         $('#map').trigger("lake:selected", {feature: {attributes: {id: $.url().param("reachcode")}}});
     }
@@ -96,7 +96,7 @@ $(document).ready(function(){
     <div id="info-panel" class="tab-content">
         <div id="info-panel-lake" class="tab-pane">
             <div id="lake-content">
-                <p>Click a lake on the map to view information about it.</p>
+                <div class="alert alert-warning">Click a lake on the map to view information about it. <strong>Note:</strong> You may need to zoom in on the lake before you can click it.</div>
             </div>
             <div id="lake-loading"><img src="{{ STATIC_URL }}img/ajax-loader.gif" /></div>
         </div>

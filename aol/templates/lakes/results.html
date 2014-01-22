@@ -1,19 +1,24 @@
 {% extends "main.html" %}
+{% block title %}Search Results{% endblock %}
 {% block content %}
-<div class= 'wrap' >
-	<h2>Search Results for: <i>{{ query }}</i></h2>
-    
-    <form class='wrap' method='get'>
-        <input type='text' name='q' value="{{ query }}" autofocus />
-        <input type='submit' value='Lake Search' />
-    </form>
-    {% if lakes.count == 0 %}
-        <p class='wrap' style="color: red;">Sorry, no lakes were found.</p>
-    {% endif %}	
-    <ol id="lake-list" class="wrap">
-        {% for lake in lakes %}
-            <li class="{% cycle 'odd' 'even' %}" ><a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">{{ lake }}</a> (<em>{{ lake.counties }}</em>)</li>
-        {% endfor %}
-	</ol>
-</div>
+
+<h2>Search Results for: <em>{{ query }}</em></h2>
+
+<form class='wrap' method='get'>
+    <input type='text' name='q' value="{{ query }}" autofocus />
+    <input type='submit' value='Lake Search' />
+</form>
+<br />
+
+{% if lakes.count == 0 %}
+    <div class="alert alert-warning">Sorry, no lakes were found.</div>
+{% endif %}	
+
+<table class="table table-condensed table-striped">
+    {% for lake in lakes %}
+        <tr>
+            <td><a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">{{ lake }}</a> (<em>{{ lake.counties }}</em>)</td>
+        </tr>
+    {% endfor %}
+</table>
 {% endblock %}
