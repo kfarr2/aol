@@ -34,7 +34,7 @@ def edit_flatpage(request, pk=None):
         if form.is_valid():
             form.save()
             messages.success(request, "Page Editied")
-            return HttpResponseRedirect(reverse("admin"))
+            return HttpResponseRedirect(reverse("admin-listing"))
     else:
         form = FlatPageForm(instance=page)
 
