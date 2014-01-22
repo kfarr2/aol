@@ -5,7 +5,6 @@ from aol.lakes import views as lakes
 from aol.home import views as home
 from aol.maps import views as maps
 from aol.users import views as customadmin
-#from .views import mussels
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
