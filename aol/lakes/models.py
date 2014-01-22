@@ -45,6 +45,7 @@ class NHDLakeManager(models.Manager):
         or reachcode containing the particular query keyword
         """
         qs = NHDLake.objects.filter(Q(gnis_name__icontains=query) | Q(title__icontains=query) | Q(gnis_id__icontains=query) | Q(reachcode__icontains=query))
+        qs = qs.extra(select={"lake_area": "ST_AREA(the_geom)"}, order_by=["-lake_area"])
         if limit:
             qs = qs[:limit]
         return qs
