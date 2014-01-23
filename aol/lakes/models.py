@@ -45,7 +45,12 @@ class NHDLakeManager(models.Manager):
         or reachcode containing the particular query keyword
         """
         qs = NHDLake.objects.filter(Q(gnis_name__icontains=query) | Q(title__icontains=query) | Q(gnis_id__icontains=query) | Q(reachcode__icontains=query))
-        qs = qs.extra(select={"lake_area": "ST_AREA(the_geom)"}, order_by=["-lake_area"])
+        qs = qs.extra(
+            tables=["(SELECT reachcode, the_geom FROM lake_geom) AS lake_geom)"],
+            select={"lake_area": "ST_AREA(the_geom)"}, 
+            order_by=["-lake_area"],
+            where=["lake_geom.reachcode = nhd.reachcode"]
+        )
         if limit:
             qs = qs[:limit]
         return qs
@@ -131,10 +136,12 @@ class NHDLakeManager(models.Manager):
             raise ValueError("scale not valid")
 
         qs = self.all().extra(
-            select={'kml': 'st_askml(%s)' % (geom_col)},
+            select={'kml': 'st_askml(lake_geom.%s)' % (geom_col)},
+            tables=["(SELECT * FROM lake_geom) AS lake_geom"],
             where=[
-                "nhd.the_geom && st_setsrid(st_makebox2d(st_point(%s, %s), st_point(%s, %s)), 3644)",
-                "ST_AREA(%s) > 0" % geom_col
+                "lake_geom.reachcode = nhd.reachcode",
+                "lake_geom.the_geom && st_setsrid(st_makebox2d(st_point(%s, %s), st_point(%s, %s)), 3644)",
+                "ST_AREA(lake_geom.%s) > 0" % geom_col
             ],
             params=bbox
         )
@@ -180,7 +187,7 @@ class NHDLake(models.Model):
         if not hasattr(self, "_area"):
             cursor = connections['default'].cursor()
             # 43560 is the number of square feet in an arre
-            cursor.execute("SELECT ST_AREA(the_geom)/43560 FROM nhd WHERE reachcode = %s", (self.reachcode,))
+            cursor.execute("SELECT ST_AREA(the_geom)/43560 FROM lake_geom WHERE reachcode = %s", (self.reachcode,))
             self._area = cursor.fetchone()[0]
         return self._area
 
@@ -190,14 +197,14 @@ class NHDLake(models.Model):
         if not hasattr(self, "_perimeter"):
             cursor = connections['default'].cursor()
             # 5280 is the number of feet in a mile
-            cursor.execute("SELECT ST_PERIMETER(the_geom)/5280 FROM nhd WHERE reachcode = %s", (self.reachcode,))
+            cursor.execute("SELECT ST_PERIMETER(the_geom)/5280 FROM lake_geom WHERE reachcode = %s", (self.reachcode,))
             self._perimeter = cursor.fetchone()[0]
         return self._perimeter
 
     @property
     def bounding_box(self):
         if not hasattr(self, "_bbox"):
-            lakes = NHDLake.objects.raw("""SELECT reachcode, ST_Box2D(ST_Envelope(st_expand(the_geom,1000))) as coords from nhd WHERE reachcode = %s""", (self.pk,))
+            lakes = LakeGeom.objects.raw("""SELECT reachcode, ST_Box2D(ST_Envelope(st_expand(the_geom,1000))) as coords from lake_geom WHERE reachcode = %s""", (self.pk,))
             lake = list(lakes)[0]
             self._bbox = re.sub(r'[^0-9.-]', " ", lake.coords).split()
         return self._bbox
@@ -270,9 +277,9 @@ class NHDLake(models.Model):
         Return the URL to the lakebasin tile thumbnail from the arcgis server
         """
         # the magic 1000 here is from the original AOL too 
-        results = NHDLake.objects.raw("""
+        results = LakeGeom.objects.raw("""
         SELECT st_box2d(st_envelope(st_expand(the_geom,1000))) as bbox, reachcode
-        FROM nhd where reachcode = %s
+        FROM lake_geom where reachcode = %s
         """, (self.pk,))
 
         bbox = results[0].bbox
@@ -298,7 +305,7 @@ class NHDLake(models.Model):
         """
         distance = 0
         cursor = connections['default'].cursor()
-        cursor.execute("""SELECT ST_ASEWKT(the_geom) as ewkt, ST_SRID(the_geom) AS srid FROM nhd WHERE reachcode = %s""", (self.reachcode,))
+        cursor.execute("""SELECT ST_ASEWKT(the_geom) as ewkt, ST_SRID(the_geom) AS srid FROM lake_geom WHERE reachcode = %s""", (self.reachcode,))
         row = cursor.fetchone()
         ewkt = row[0]
         srid = row[1]
@@ -321,7 +328,7 @@ class NHDLake(models.Model):
 
 
 class LakeGeom(models.Model):
-    reachcode = models.CharField(max_length=32, primary_key=True)
+    reachcode = models.OneToOneField(NHDLake, primary_key=True, db_column="reachcode")
     the_geom = models.MultiPolygonField(srid=3644)
     the_geom_866k = models.MultiPolygonField(srid=3644)
     the_geom_217k = models.MultiPolygonField(srid=3644)
@@ -332,7 +339,7 @@ class LakeGeom(models.Model):
     objects = models.GeoManager()
 
     class Meta:
-        db_table = "nhd"
+        db_table = "lake_geom"
 
 
 class LakeCounty(models.Model):
