@@ -1,29 +1,31 @@
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from ..models import Lake
+from ..models import NHDLake as Lake
 
 class LakesTest(TestCase):
     fixtures = ['lakes.json']
 
-	# just make sure the views return a 200
     def test_listing(self):
+        """Make sure the listing page works"""
         response = self.client.get(reverse('lakes-listing'))
         self.assertEqual(response.status_code, 200)
 
-    def test_detail(self):
-        lakes = list(Lake.objects.all())
-        # test the first couple lakes
-        for lake in lakes:
-            response = self.client.get(reverse('lakes-detail'), kwargs={"reachcode": lake.reachcode})
-            self.assertEqual(response.status_code, 200)
+        # make sure it lists with a letter
+        response = self.client.get(reverse('lakes-listing', args=("m",)))
+        self.assertEqual(response.status_code, 200)
 
-    def test_search_lake(self):
+    def test_detail(self):
+        """Make sure the lake detail page loads"""
+        response = self.client.get(reverse('lakes-detail', args=(123,)))
+        self.assertEqual(response.status_code, 200)
+
+    def test_search(self):
         '''test that a blank query returns all lakes'''
         lakes = list(Lake.objects.all())
         response = self.client.get("%s?q=%s" % (reverse('lakes-search'), "") )
         self.assertEqual(len(lakes), response.context['lakes'].count())
  
-    def test_lake_search_title(self):
+    def test_search_title(self):
         '''test lake title query returns lake page assumes unique ttile which is true of test data'''
         lakes = list(Lake.objects.all())
         # test the first couple lakes
@@ -34,9 +36,9 @@ class LakesTest(TestCase):
             #check if reachcode is in redirect url
             self.assertIn(lake.reachcode,str(response))
     
-    def test_lake_search_garbage(self):
+    def test_search_garbage(self):
         '''test garbage query returns error/no results'''
         response = self.client.get("%s?q=fhsy78rh" % reverse('lakes-search'))
         #test context contains error
-        self.assertIn('error', response.context)
+        self.assertEqual(0, len(response.context['lakes']))
         self.assertEqual(response.status_code, 200)
