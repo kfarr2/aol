@@ -36,19 +36,51 @@
 
     <div class="tab-pane" id='mussels'>
         {% if lake.mussels %}
-            {{ lake.mussels }}
+            <table class="table table-condensed table-striped">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Status/Species</th>
+                        <th>Source</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mussel in lake.mussels %}
+                        <tr>
+                            <td>{{ mussel.date_checked }}</td>
+                            <td>{{ mussel.species }}</td>
+                            <td>{{ mussel.source }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         {% else %}
             <div class="alert alert-warning">No mussel data available.</div>
         {% endif %}
     </div>
 
     <div class="tab-pane" id='plants'>
-        {% if plants %}
-            <ul>
-                {% for plant in plants %}
-                    <li>{{ plant.name }} ({{ plant.common_name }})</li>
-                {% endfor %}
-            </ul>
+        {% if lake_plants %}
+            <table class="table table-condensed table-striped">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Species</th>
+                        <th>AIS</th>
+                        <th>Source</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lake_plant in lake_plants %}
+                        <tr>
+                            <td class="nowrap">{{ lake_plant.observation_date|default:"-" }}</td>
+                            <td>{{ lake_plant.plant.name }} ({{ lake_plant.plant.common_name }})</td>
+                            <td>{{ lake_plant.plant.is_aquatic_invasive }}</td>
+                            <td>CLR</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         {% else %}  
             <div class="alert alert-warning">No plant data available.</div>
         {% endif %}

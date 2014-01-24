@@ -271,38 +271,50 @@ class NHDLake(models.Model):
         path = "export?bbox=%s&bboxSR=&layers=&layerdefs=&size=&imageSR=&format=jpg&transparent=false&dpi=&time=&layerTimeOptions=&f=image"
         return SETTINGS.TILE_URL + (path % bbox)
 
+    @property
     def mussels(self):
         """
         This queries the mussel DB for any mussels that are within a certain
         distance of this lake. It returns a comma separated string of the
         status of the mussels
         """
-        distance = 0
-        cursor = connections['default'].cursor()
-        cursor.execute("""SELECT ST_ASEWKT(the_geom) as ewkt, ST_SRID(the_geom) AS srid FROM lake_geom WHERE reachcode = %s""", (self.reachcode,))
-        row = cursor.fetchone()
-        ewkt = row[0]
-        srid = row[1]
+        if not hasattr(self, "_mussels"):
+            distance = 0
+            cursor = connections['default'].cursor()
+            cursor.execute("""SELECT ST_ASEWKT(the_geom) as ewkt, ST_SRID(the_geom) AS srid FROM lake_geom WHERE reachcode = %s""", (self.reachcode,))
+            row = cursor.fetchone()
+            ewkt = row[0]
+            srid = row[1]
 
-        # in TEST mode we don't have a connection to the mussels DB so we assume this works
-        if "mussels" not in connections:
-            return ""
+            # in TEST mode we don't have a connection to the mussels DB so we assume this works
+            if "mussels" not in connections:
+                self._mussels = []
+                return self._mussels
 
-        # now query the mussels DB for mussels within a certain distance of this lake
-        mussels_cursor = connections['mussels'].cursor()
-        mussels_cursor.execute("""
-            SELECT 
-                DISTINCT status 
-            FROM 
-                display_view 
-            WHERE 
-                ST_DWITHIN(ST_TRANSFORM(the_geom, %s), ST_GeomFromEWKT(%s), %s)
-        """, (srid, ewkt, distance))
-        results = []
-        for row in mussels_cursor:
-            results.append(row[0])
+            # now query the mussels DB for mussels within a certain distance of this lake
+            mussels_cursor = connections['mussels'].cursor()
+            mussels_cursor.execute("""
+                SELECT 
+                    DISTINCT
+                    status as species,
+                    date_checked,
+                    agency
+                FROM 
+                    display_view 
+                WHERE 
+                    ST_DWITHIN(ST_TRANSFORM(the_geom, %s), ST_GeomFromEWKT(%s), %s)
+                ORDER BY date_checked
+            """, (srid, ewkt, distance))
+            results = []
+            for row in mussels_cursor:
+                results.append({
+                    "species": row[0],
+                    "date_checked": row[1],
+                    "source": row[2]
+                })
+            self._mussels = results
 
-        return ", ".join(results)
+        return self._mussels
 
 
 class LakeGeom(models.Model):
@@ -465,6 +477,7 @@ class Plant(models.Model):
     common_name = models.CharField(max_length=255) # Common name of the plant
     former_name = models.CharField(max_length=255) # Former name of the plant
     plant_family = models.CharField(max_length=255) # The family name that the plant belongs to
+    is_aquatic_invasive = models.BooleanField(default=False)
 
     class Meta:
         db_table = "plant"
@@ -477,9 +490,11 @@ class LakePlant(models.Model):
     lake_plant_id = models.AutoField(primary_key=True)
     lake = models.ForeignKey(NHDLake, db_column="reachcode")
     plant = models.ForeignKey("Plant")
+    observation_date = models.DateField(null=True)
 
     class Meta:
         db_table = "lake_plant"
+        ordering = ['observation_date']
 
 
 class FacilityManager(models.Manager):

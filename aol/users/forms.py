@@ -1,8 +1,10 @@
+import datetime
 from django import forms
 from django.db.models import Max
-from aol.lakes.models import Document, NHDLake, LakeCounty, Photo, Plant
+from django.db import transaction
 from django.utils.translation import ugettext as _
 from django.contrib.flatpages.forms import FlatpageForm as FPF
+from aol.lakes.models import Document, NHDLake, LakeCounty, Photo, Plant, LakePlant
 
 class LakeForm(forms.ModelForm):
     def save(self, *args, **kwargs):
@@ -112,8 +114,8 @@ class PlantForm(forms.Form):
 
             # Check if there are enough attributes
             # Each line should have 5 attributes, which are separated by tab
-            if len(attributes) < 5:
-                raise forms.ValidationError(_('Missing attributes: Line %d should have 5 attributes separated by 4 tabs. \n Make sure you have 4 tabs separated 5 attributes') % line_no)
+            if len(attributes) < 7:
+                raise forms.ValidationError(_('Missing attributes: Line %d should have 7 attributes separated by 6 tabs. \n Make sure you have 6 tabs separated 7 attributes') % line_no)
             # Check if reachcode is available and should not be the header
             elif attributes[0] and attributes[0] != 'ReachCode':
                 lakes = NHDLake.objects.filter(reachcode=attributes[0])
@@ -125,11 +127,48 @@ class PlantForm(forms.Form):
                     plant_info['common_name'] = attributes[2]
                     plant_info['plant_family'] = attributes[3]
                     plant_info['former_name'] = attributes[4]
+                    observation_date = attributes[5]
+                    plant_info['observation_date'] = datetime.datetime.strptime(observation_date, "%m/%d/%Y").date() if observation_date.strip() else None
+                    plant_info['is_aquatic_invasive'] = attributes[5]
 
                     output.append(plant_info)
                 # Now it means the reachcode is invalid
                 else:
-                    raise forms.ValidationError(_('Invalid reachcode: Reachcode no. %s is invalid in line %d. \n Erase the line or provide a valid reachcode to continue processing.') % (attributes[0], line_no))
+                    pass
+                    # I don't think we care now if the reachcode cannot be found
+                    #raise forms.ValidationError(_('Invalid reachcode: Reachcode no. %s is invalid in line %d. \n Erase the line or provide a valid reachcode to continue processing.') % (attributes[0], line_no))
 
-                
         return output
+
+    def save(self):
+        with transaction.atomic():
+            LakePlant.objects.all().delete()
+            Plant.objects.all().delete()
+            for line in self.cleaned_data:
+                # Get attribute values at each line
+                reach_code = line['reachcode']
+                name = line['name']
+                common_name = line['common_name']
+                plant_family = line['plant_family']
+                former_name = line['former_name']
+                is_aquatic_invasive = line['is_aquatic_invasive']
+                observation_date = line['observation_date']
+
+                # print "%s - %s - %s - %s - %s " % (reach_code, name, common_name, plant_family, former_name)
+                # If reach_code is not empty, look up the lake using reachcode
+                if reach_code:
+                    try:
+                        lake = NHDLake.objects.get(reachcode=reach_code)
+                    except NHDLake.DoesNotExist:
+                        continue
+
+                    # If lakes is not empty, then look for exist plant in database
+                    # or create new plant information from user input
+                    try:
+                        plant = Plant.objects.get(name=name)
+                    except Plant.DoesNotExist:
+                        plant = Plant(name=name, common_name=common_name, former_name=former_name, plant_family=plant_family, is_aquatic_invasive=is_aquatic_invasive)
+                        plant.save()
+
+                    # Add this plant to the lake where it should belong to
+                    LakePlant(lake=lake, plant=plant, observation_date=observation_date).save()

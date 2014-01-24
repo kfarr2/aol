@@ -132,33 +132,7 @@ def add_plant(request):
     if request.POST:
         form = PlantForm(request.POST)
         if form.is_valid():
-            for line in form.cleaned_data:
-                
-                # Get attribute values at each line
-                reach_code = line['reachcode']
-                name = line['name']
-                common_name = line['common_name']
-                plant_family = line['plant_family']
-                former_name = line['former_name']
-
-                # print "%s - %s - %s - %s - %s " % (reach_code, name, common_name, plant_family, former_name)
-                # If reach_code is not empty, look up the lake using reachcode
-                if reach_code:
-                    lakes = NHDLake.objects.filter(reachcode=reach_code)
-                    
-                    # If lakes is not empty, then look for exist plant in database
-                    # or create new plant information from user input
-                    if lakes:
-                        try:
-                            plant = Plant.objects.get(name=name)
-                        except Plant.DoesNotExist:
-                            plant = Plant(name=name, common_name=common_name, former_name=former_name, plant_family=plant_family)
-                            plant.save()
-
-                        # Add this plant to the lake where it should belong to
-                        for lake in lakes:
-                            lake.plants.add(plant)
-
+            form.save()
             messages.success(request, " Plants information is saved ")
             return HttpResponseRedirect(reverse("admin-add-plant"))
     else:

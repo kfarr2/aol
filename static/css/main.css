@@ -1,3 +1,7 @@
+textarea {
+    width:100%;
+}
+
 #header-wrap {
     background-color: #06186A;
     padding-top:20px;
@@ -162,3 +166,6 @@
     );
 } 
 
+.nowrap {
+    white-space:nowrap;
+}

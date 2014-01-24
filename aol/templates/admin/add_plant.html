@@ -1,15 +1,11 @@
 {% extends "main.html" %}
 {% block content %}
-<script type="text/javascript" src="{{ STATIC_URL }}/js/jquery-linedtextarea/jquery-linedtextarea.js"></script>
-<script>
-$(function() {
-	$("#id_user_input").linedtextarea() 
-});
-</script>
 
+<p>Open the "Export" query in your Microsoft Access Database, copy everything (Ctrl-A, Ctrl-C), and paste everything in the text box below (Ctrl-V)</p>
+<p>The columns should be in this order, separated by tab characters: <samp>ReachCode|Scientific Name|CommonName|Family|Former name|ObsDate|AIS</samp></p>
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    {{ form }}
+    {% include "_form.html" %}
     <input type="submit" name="submit" value="submit" />
 </form>
 {% endblock %}
