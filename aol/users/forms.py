@@ -1,4 +1,5 @@
 from django import forms
+from django.db.models import Max
 from aol.lakes.models import Document, NHDLake, LakeCounty, Photo, Plant
 from django.utils.translation import ugettext as _
 from django.contrib.flatpages.forms import FlatpageForm as FPF
@@ -72,6 +73,13 @@ class DocumentForm(DeletableModelForm):
             'file',
             'rank',
         )
+
+    def __init__(self, *args, **kwargs):
+        # initialize the rank with the highest rank + 1
+        if kwargs['instance'].pk is None:
+            kwargs['instance'].rank = Document.objects.filter(lake=kwargs['instance'].lake).aggregate(Max('rank'))['rank__max'] + 1
+
+        super(DocumentForm, self).__init__(*args, **kwargs)
 
 
 class PhotoForm(DeletableModelForm):
