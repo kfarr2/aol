@@ -6,15 +6,3 @@ class HomeTest(TestCase):
     def test_homepage(self):
         response = self.client.get(reverse('home'))
         self.assertEqual(response.status_code, 200)
-
-    def test_about(self):
-        response = self.client.get(reverse('about'))
-        self.assertEqual(response.status_code, 200)
-
-    def test_credits(self):
-        response = self.client.get(reverse('credits'))
-        self.assertEqual(response.status_code, 200)
-
-    def test_map(self):
-        response = self.client.get(reverse('map'))
-        self.assertEqual(response.status_code, 200)
