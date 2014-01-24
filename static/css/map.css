@@ -20,10 +20,14 @@
 }
 
 #small-header {
-    background-color: #06186A;
     color: #fff;
-    font-size: 18px;
+    font-size: 24px;
     text-decoration: none;
+    position:absolute;
+    left:10px;
+    top:10px;
+    display:inline-block;
+    z-index:10;
 }
 
 #small-header img {
@@ -33,6 +37,7 @@
 
 #small-header a {
     color: #fff;
+    text-shadow: black 0.1em 0.1em 0.2em
 }
 
 #pull-out-tabs {
@@ -100,4 +105,8 @@
 .facility-info {
     margin-top:10px;
     font-size:12px;
+}
+
+#map div.olControlZoom {
+    top:100px;
 }

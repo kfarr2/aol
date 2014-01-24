@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% block title %}Interactive Map{% endblock %}
 {% block head %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/OpenLayers/OpenLayers.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/proj4js.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/layers.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/map.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/purl.js"></script>
     <link href="{{ STATIC_URL }}css/map.css" rel="stylesheet">
 {% endblock %}
 {% block body %}
-<script type="text/javascript" src="{{ STATIC_URL }}/js/OpenLayers/OpenLayers.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}/js/proj4js.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}js/layers.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}js/map.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}js/purl.js"></script>
 <script type="text/javascript">
 $(document).ready(function(){
     // when a lake is clicked on the map
@@ -88,11 +88,14 @@ $(document).ready(function(){
     <li><a data-toggle="tab" href="#info-panel-lake" class="tab">Lake</a></li>
 </ul>
 
+
 <div id="map"></div>
+
+<div id="small-header">
+    <a href='/'><img id='logo' src='{{ STATIC_URL }}img/aol_logo.png' />Atlas of Oregon Lakes</a>
+</div>
+
 <div id="side-panel">
-    <div id="small-header">
-        <a href='/'><img id='logo' src='{{ STATIC_URL }}img/aol_logo.png' />Atlas of Oregon Lakes</a>
-    </div>
     <div id="info-panel" class="tab-content">
         <div id="info-panel-lake" class="tab-pane">
             <div id="lake-content">
