@@ -234,7 +234,7 @@ class NHDLake(models.Model):
         # here is from the original AOL
         results = HUC6.objects.raw("""
         SELECT %s(st_envelope(st_expand(the_geom, 300))) AS bbox, huc6.huc6_id
-        FROM huc6 WHERE huc6.huc6_id = %s
+        FROM huc6 WHERE huc6.huc6_id = %%s
         """ % SETTINGS.POSTGIS_BOX2D, (self.huc6_id,))
 
         try:
@@ -253,7 +253,7 @@ class NHDLake(models.Model):
         # the magic 1000 here is from the original AOL too 
         results = LakeGeom.objects.raw("""
         SELECT %s(st_envelope(st_expand(the_geom,1000))) as bbox, reachcode
-        FROM lake_geom where reachcode = %s
+        FROM lake_geom where reachcode = %%s
         """ % SETTINGS.POSTGIS_BOX2D, (self.pk,))
 
         bbox = results[0].bbox
@@ -339,7 +339,7 @@ class Document(models.Model):
     document_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
     file = models.FileField(upload_to=lambda instance, filename: instance.DOCUMENT_DIR + filename)
-    rank = models.IntegerField(help_text="The order this field is displayed on the lakes detail page")
+    rank = models.IntegerField(verbose_name="Weight", help_text="Defines the order in which items are listed.")
     uploaded_on = models.DateTimeField(auto_now_add=True)
 
     lake = models.ForeignKey(NHDLake, db_column="reachcode")
