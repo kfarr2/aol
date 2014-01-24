@@ -1,5 +1,9 @@
 import sys
 
+# For some reason we can't have a "POSTGIS_VERSION" variable since that
+# interferes with something else, so I added a "YOUR_" prefix.
+YOUR_POSTGIS_VERSION = 2
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 

@@ -46,8 +46,8 @@ class NHDLakeManager(models.Manager):
         """
         qs = NHDLake.objects.filter(Q(gnis_name__icontains=query) | Q(title__icontains=query) | Q(gnis_id__icontains=query) | Q(reachcode__icontains=query))
         qs = qs.extra(
-            tables=["(SELECT reachcode, the_geom FROM lake_geom) AS lake_geom)"],
-            select={"lake_area": "ST_AREA(the_geom)"}, 
+            tables=["(SELECT reachcode, the_geom FROM lake_geom) AS lake_geom"],
+            select={"lake_area": "ST_AREA(lake_geom.the_geom)"}, 
             order_by=["-lake_area"],
             where=["lake_geom.reachcode = nhd.reachcode"]
         )
@@ -204,7 +204,7 @@ class NHDLake(models.Model):
     @property
     def bounding_box(self):
         if not hasattr(self, "_bbox"):
-            lakes = LakeGeom.objects.raw("""SELECT reachcode, ST_Box2D(ST_Envelope(st_expand(the_geom,1000))) as coords from lake_geom WHERE reachcode = %s""", (self.pk,))
+            lakes = LakeGeom.objects.raw("""SELECT reachcode, %s(ST_Envelope(st_expand(the_geom,1000))) as coords from lake_geom WHERE reachcode = %%s""" % SETTINGS.POSTGIS_BOX2D, (self.pk,))
             lake = list(lakes)[0]
             self._bbox = re.sub(r'[^0-9.-]', " ", lake.coords).split()
         return self._bbox
@@ -225,32 +225,6 @@ class NHDLake(models.Model):
         self._counties = value
 
     @property
-    def page_urls(self):
-        """
-        Returns a dict with possible keys "page", "map", "stats" and "basin",
-        where the values are the URLs to the appropriate PDF page
-        """
-        files = ("map", "page", "survey", "stats")
-        urls = {}
-        for file in files:
-            # construct the path to the file, and see if it exists
-            path = os.path.join(SETTINGS.MEDIA_ROOT, "pages", "%d_%s.pdf" % (self.pk, file))
-            if os.path.exists(path):
-                urls[file] = SETTINGS.MEDIA_URL + os.path.relpath(path, SETTINGS.MEDIA_ROOT)
-
-        return urls
-
-    @property
-    def basin_page_url(self):
-        """
-        Returns the URL to the AOL PDF page for the lake, or None is there is none
-        """
-        path = os.path.join(SETTINGS.MEDIA_ROOT, "pages", "SUP%04d" % self.page_number)
-        if os.path.exists(path):
-            return SETTINGS.MEDIA_URL + os.path.relpath(path, SETTINGS.MEDIA_ROOT)
-        return None
-
-    @property
     def watershed_tile_url(self):
         """
         Returns the URL to the watershed tile thumbnail from the arcgis
@@ -259,9 +233,9 @@ class NHDLake(models.Model):
         # get the bounding box of the huc6 geom for the lake. The magic 300
         # here is from the original AOL
         results = HUC6.objects.raw("""
-        SELECT st_box2d(st_envelope(st_expand(the_geom, 300))) AS bbox, huc6.huc6_id
+        SELECT %s(st_envelope(st_expand(the_geom, 300))) AS bbox, huc6.huc6_id
         FROM huc6 WHERE huc6.huc6_id = %s
-        """, (self.huc6_id,))
+        """ % SETTINGS.POSTGIS_BOX2D, (self.huc6_id,))
 
         try:
             bbox = list(results)[0].bbox
@@ -278,9 +252,9 @@ class NHDLake(models.Model):
         """
         # the magic 1000 here is from the original AOL too 
         results = LakeGeom.objects.raw("""
-        SELECT st_box2d(st_envelope(st_expand(the_geom,1000))) as bbox, reachcode
+        SELECT %s(st_envelope(st_expand(the_geom,1000))) as bbox, reachcode
         FROM lake_geom where reachcode = %s
-        """, (self.pk,))
+        """ % SETTINGS.POSTGIS_BOX2D, (self.pk,))
 
         bbox = results[0].bbox
         return self._bbox_thumbnail_url(bbox)
@@ -309,6 +283,10 @@ class NHDLake(models.Model):
         row = cursor.fetchone()
         ewkt = row[0]
         srid = row[1]
+
+        # in TEST mode we don't have a connection to the mussels DB so we assume this works
+        if "mussels" not in connections:
+            return ""
 
         # now query the mussels DB for mussels within a certain distance of this lake
         mussels_cursor = connections['mussels'].cursor()
