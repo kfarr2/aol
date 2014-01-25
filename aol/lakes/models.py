@@ -204,7 +204,7 @@ class NHDLake(models.Model):
     @property
     def bounding_box(self):
         if not hasattr(self, "_bbox"):
-            lakes = LakeGeom.objects.raw("""SELECT reachcode, %s(ST_Envelope(st_expand(the_geom,1000))) as coords from lake_geom WHERE reachcode = %%s""" % SETTINGS.POSTGIS_BOX2D, (self.pk,))
+            lakes = LakeGeom.objects.raw("""SELECT reachcode, Box2D(ST_Envelope(st_expand(the_geom,1000))) as coords from lake_geom WHERE reachcode = %s""", (self.pk,))
             lake = list(lakes)[0]
             self._bbox = re.sub(r'[^0-9.-]', " ", lake.coords).split()
         return self._bbox
@@ -233,9 +233,9 @@ class NHDLake(models.Model):
         # get the bounding box of the huc6 geom for the lake. The magic 300
         # here is from the original AOL
         results = HUC6.objects.raw("""
-        SELECT %s(st_envelope(st_expand(the_geom, 300))) AS bbox, huc6.huc6_id
-        FROM huc6 WHERE huc6.huc6_id = %%s
-        """ % SETTINGS.POSTGIS_BOX2D, (self.huc6_id,))
+        SELECT Box2D(st_envelope(st_expand(the_geom, 300))) AS bbox, huc6.huc6_id
+        FROM huc6 WHERE huc6.huc6_id = %s
+        """, (self.huc6_id,))
 
         try:
             bbox = list(results)[0].bbox
@@ -252,9 +252,9 @@ class NHDLake(models.Model):
         """
         # the magic 1000 here is from the original AOL too 
         results = LakeGeom.objects.raw("""
-        SELECT %s(st_envelope(st_expand(the_geom,1000))) as bbox, reachcode
-        FROM lake_geom where reachcode = %%s
-        """ % SETTINGS.POSTGIS_BOX2D, (self.pk,))
+        SELECT Box2D(st_envelope(st_expand(the_geom,1000))) as bbox, reachcode
+        FROM lake_geom where reachcode = %s
+        """, (self.pk,))
 
         bbox = results[0].bbox
         return self._bbox_thumbnail_url(bbox)
