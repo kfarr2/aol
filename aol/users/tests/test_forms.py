@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from aol.lakes.models import Lake, Photo
+from aol.lakes.models import NHDLake as Lake, Photo
 from ..forms import LakeForm, PhotoForm
 
 class LakeFormTest(TestCase):
