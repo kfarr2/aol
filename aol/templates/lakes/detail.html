@@ -1,4 +1,8 @@
 {% extends "main.html" %}
+{% block head %}
+<script src="{{ STATIC_URL }}lightbox/js/lightbox-2.6.min.js"></script>
+<link href="{{ STATIC_URL }}lightbox/css/lightbox.css" rel="stylesheet" />
+{% endblock %}
 {% block title %}{{ lake }}{% endblock %}
 {% block content %}
 <div class="row">

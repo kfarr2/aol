@@ -102,7 +102,7 @@
             <div id='photo-wrap'>
                 {% for photo in photos %}
                     <div class="lake-photo">
-                        <a href='{{ photo.url }}'><img src="{{ photo.thumbnail_url }}" target="_blank"/></a>
+                        <a target="_blank" title="{{ photo.caption }}" href='{{ photo.url }}' data-lightbox="photo-1"><img src="{{ photo.thumbnail_url }}"/></a>
                     </div>
                 {% endfor %}
             </div>
