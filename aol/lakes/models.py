@@ -1,10 +1,13 @@
+import requests
 import os
 import re
 from django.conf import settings as SETTINGS
 from django.contrib.gis.db import models
 from django.db.models import Q
 from django.db.models.sql.compiler import SQLCompiler
-from django.db import connections
+from django.db import connections, transaction
+from django.contrib.gis.gdal import SpatialReference, CoordTransform
+from django.contrib.gis.geos import Point
 from PIL import Image
 
 # This monkey patch allows us to write subqueries in the `tables` argument to the
@@ -507,6 +510,48 @@ class FacilityManager(models.Manager):
             params=bbox
         )
 
+    def reimport(self):
+        """
+        Connects to the Oregon facility JSON endpoint and reimports all the
+        facilities
+        """
+        response = requests.get("https://data.oregon.gov/resource/spxe-q5vj.json")
+        js = response.json()
+        # the data source uses WGS84 coords, so we have to transform them
+        gcoord = SpatialReference(4326)
+        mycoord = SpatialReference(3644)
+        trans = CoordTransform(gcoord, mycoord)
+        with transaction.atomic():
+            # wipe out the existing facilties
+            Facility.objects.all().delete()
+            for row in js:
+                try:
+                    p = Point(float(row['location']['longitude']), float(row['location']['latitude']), srid=4326)
+                except KeyError:
+                    continue
+                p.transform(trans)
+
+                f = Facility(
+                    name=row['boating_facility_name'],
+                    managed_by=row.get('managed_by', ''),
+                    telephone=row.get('telephone', {}).get('phone_number', ''),
+                    ramp_type=row.get('ramp_type_lanes', ''),
+                    trailer_parking=row.get('trailer_parking', ''),
+                    moorage=row.get('moorage', ''),
+                    launch_fee=row.get('launch_fee', ''),
+                    restroom=row.get('restroom', ''),
+                    supplies=row.get('supplies', ''),
+                    gas_on_water=row.get('gas_on_the_water', ''),
+                    diesel_on_water=row.get('diesel_on_the_water', ''),
+                    waterbody=row.get('waterbody', ''),
+                    fish_cleaning=row.get('fish_cleaning_station', ''),
+                    pumpout=row.get('pumpout', ''),
+                    dump_station=row.get('dump_station', ''),
+                    the_geom=p,
+                    icon_url=row.get('boater_services', ''),
+                )
+                f.save()
+
 
 class Facility(models.Model):
     facility_id = models.AutoField(primary_key=True)
@@ -517,7 +562,7 @@ class Facility(models.Model):
     telephone = models.CharField(max_length=254) 
     ramp_type = models.CharField(max_length=254, db_column="ramp_type_")
     moorage = models.CharField(max_length=254) 
-    trailer_park = models.CharField(max_length=254, db_column="trailer_pa")
+    trailer_parking = models.CharField(max_length=254, db_column="trailer_pa")
     transient = models.CharField(max_length=254)
     launch_fee = models.CharField(max_length=254)
     restroom = models.CharField(max_length=254)
@@ -534,7 +579,6 @@ class Facility(models.Model):
     icon_url = models.CharField(max_length=254)
     the_geom = models.PointField(srid=3644)
 
-    lake = models.ForeignKey(NHDLake, db_column="reachcode")
     objects = FacilityManager()
 
     class Meta:

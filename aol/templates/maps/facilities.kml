@@ -4,8 +4,9 @@
   <name>lakes</name>
   <Style id="facility">
     <IconStyle>
+      <scale>0.5</scale>
       <Icon>
-        <href>{{ STATIC_URL }}img/ombf_icons/boat_launch.png</href>
+        <href>{{ STATIC_URL }}img/ombf_icons/boat_launch_small.png</href>
       </Icon>
     </IconStyle>
   </Style>
@@ -18,33 +19,22 @@
             <name>{{ row.name }}</name>
             <description><![CDATA[
                 <h4>{{ row.name }}</h4>
+                {% if row.icon_url %}
+                    <img src="https://data.oregon.gov/views/spxe-q5vj/files/{{ row.icon_url }}" />
+                {% endif %}
                 <div class='facility-info'>Managed by {{ row.managed_by }}<br />
                 <b>Telephone:</b> {{ row.telephone }} <br />
                 <b>Ramp Type:</b> {{ row.ramp_type }}<br />
                 <b>Trailer Parking:</b> {{ row.trailer_parking }} <br />
                 <b>Moorage:</b> {{ row.moorage }} <br />
                 <b>Launch Fee:</b> {{ row.launch_fee }}<br />
-                {% if row.restroom == 'yes' %}
-                    <div><img src='{{ STATIC_URL }}img/ombf_icons/public_restroom_small.png' valign='middle' />Public Restrooms</div>
-                {% endif %}
-                {% if row.supplies == 'yes' %}
-                    <div><img src='{{ STATIC_URL }}img/ombf_icons/supplies_small.png' valign='middle' />Supplies</div>
-                {% endif %}
-                {% if row.gas_on_water == 'yes' %}
-                    <div><img src='{{ STATIC_URL }}img/ombf_icons/gas_on_water_small.png' valign='middle' />Gas on Water</div>
-                {% endif %}
-                {% if row.diesel_on_water == 'yes' %}
-                    <div><img src='{{ STATIC_URL }}img/ombf_icons/diesel_on_water_small.png' valign='middle' />Diesel on Water</div>
-                {% endif %}
-                {% if row.fish_cleaning == 'yes' %}
-                    <div><img src='{{ STATIC_URL }}img/ombf_icons/fish_cleaning_station_small.png' valign='middle' />Fish Cleaning Station</div>
-                {% endif %}
-                {% if row.pumpout == 'yes' %}
-                    <div><img src='{{ STATIC_URL }}img/ombf_icons/pumpout_small.png' valign='middle' />Holding Tank Pumpout / Potty Dump</div>
-                {% endif %}
-                {% if row.dump_station == 'yes' %}
-                    <div><img src='{{ STATIC_URL }}img/ombf_icons/dump_station_small.png' valign='middle' />Waste Oil Tanks</div>
-                {% endif %}
+                <b>Restroom:</b> {{ row.restroom }}<br />
+                <b>Supplies:</b> {{ row.supplies }}<br />
+                <b>Gas on Water:</b> {{ row.gas_on_water }}<br />
+                <b>Diesel on Water:</b> {{ row.diesel_on_water }}<br />
+                <b>Fish Cleaning:</b> {{ row.fish_cleaning }}<br />
+                <b>Pumpout:</b> {{ row.pumpout }}<br />
+                <b>Dump Station:</b> {{ row.dump_station }}<br />
                 </div>]]>
             </description>
             <styleUrl>#facility</styleUrl>
