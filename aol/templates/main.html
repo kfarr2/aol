@@ -15,7 +15,7 @@
                 {% comment %}Print out all the SQL queries (only in debug mode){% endcomment %}
                 <hr />
                 {% for item in sql_queries %}
-                    {{ item.sql }}
+                    <pre>{{ item.sql }}</pre>
                 {% endfor %}
             {% endif %}
         {% endblock %}
