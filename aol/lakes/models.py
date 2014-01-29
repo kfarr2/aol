@@ -5,7 +5,7 @@ from django.conf import settings as SETTINGS
 from django.contrib.gis.db import models
 from django.db.models import Q
 from django.db.models.sql.compiler import SQLCompiler
-from django.db import connections, transaction
+from django.db import connections, transaction, connection
 from django.contrib.gis.gdal import SpatialReference, CoordTransform
 from django.contrib.gis.geos import Point
 from PIL import Image
@@ -333,6 +333,57 @@ class LakeGeom(models.Model):
 
     class Meta:
         db_table = "lake_geom"
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            instance = super(LakeGeom, self).save(*args, **kwargs)
+            cursor = connection.cursor()
+            # update the fishing zone
+            cursor.execute("""
+                UPDATE 
+                    nhd 
+                SET 
+                    fishing_zone_id = (SELECT fishing_zone_id FROM fishing_zone WHERE ST_Intersects(fishing_zone.the_geom, nhd.the_geom) LIMIT 1)
+                WHERE 
+                    nhd.reachcode = %s
+                """, (self.pk,))
+            # update the huc6
+            cursor.execute("""
+                WITH foo AS (
+                    SELECT 
+                        huc6.huc6_id, 
+                        reachcode 
+                    FROM 
+                        lake_geom 
+                    INNER JOIN 
+                        huc6 ON ST_Covers(huc6.the_geom, lake_geom.the_geom)
+                    WHERE reachcode = %s
+                )
+                UPDATE 
+                    nhd 
+                SET 
+                    huc6_id = foo.huc6_id 
+                FROM 
+                    foo 
+                WHERE 
+                    nhd.reachcode = foo.reachcode
+            """, (self.pk,))
+
+            # update counties
+            cursor.execute("""DELETE FROM lake_county WHERE reachcode = %s""", (self.pk,))
+            cursor.execute("""
+                INSERT INTO lake_county (county_id, reachcode) (
+                    SELECT
+                        county_id, lake_geom.reachcode
+                    FROM
+                       county
+                    INNER JOIN 
+                        lake_geom ON ST_INTERSECTS(county.the_geom, lake_geom.the_geom)
+                    WHERE reachcode = %s
+                )
+            """, (self.pk,))
+
+        return instance
 
 
 class LakeCounty(models.Model):
