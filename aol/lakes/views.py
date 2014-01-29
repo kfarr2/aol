@@ -1,3 +1,4 @@
+import string
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse 
 from django.shortcuts import render, get_object_or_404
@@ -6,9 +7,9 @@ from .models import Photo, Document, NHDLake, LakePlant
 
 def listing(request, letter=None):
     """Display a list of all the lakes in the Atlas, with pagination"""
-    lakes = list(NHDLake.objects.important_lakes())
-    letters = sorted(set(str(lake)[0].upper() for lake in lakes if str(lake)))
+    letters = string.ascii_uppercase
 
+    lakes = None
     if letter is not None:
         letter = letter.upper()
         lakes = list(NHDLake.objects.important_lakes(starts_with=letter))
@@ -35,12 +36,12 @@ def detail(request, reachcode, template=None):
 def search(request):
     q = request.GET.get('q','')
     if "q" in request.GET:
-        qs = NHDLake.objects.search(query=q)
-        if qs.count() == 1:
+        lakes = list(NHDLake.objects.search(query=q))
+        if len(lakes) == 1:
             reachcode = qs[0].reachcode
             return HttpResponseRedirect(reverse('lakes-detail', kwargs={'reachcode':reachcode}))
   
     return render(request, "lakes/results.html", {
-        'lakes': qs, 
+        'lakes': lakes, 
         'query':q,
     })

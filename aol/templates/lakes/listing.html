@@ -9,13 +9,19 @@
 </ul>
 
 {% if letter %}
-    <table class="table table-condensed table-striped">
-        {% for lake in lakes %}
-            <tr>
-                <td><a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">{{ lake }}</a> (<em>{{ lake.counties }}</em>)</td>
-            </tr>
-        {% endfor %}
-    </table>
+    {% if lakes %}
+        <table class="table table-condensed table-striped">
+            {% for lake in lakes %}
+                <tr>
+                    <td><a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">{{ lake }}</a> (<em>{{ lake.counties }}</em>)</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <div class="alert alert-warning">
+            No matching lakes found!
+        </div>
+    {% endif %}
 {% else %}
     <div class="alert alert-warning">
         Click a letter above to see a listing of lakes.

@@ -10,7 +10,7 @@
 </form>
 <br />
 
-{% if lakes.count == 0 %}
+{% if lakes|length == 0 %}
     <div class="alert alert-warning">Sorry, no lakes were found.</div>
 {% endif %}	
 
