@@ -47,6 +47,8 @@ class Command(BaseCommand):
             for shape, record in itertools.izip(sf.iterShapes(), sf.iterRecords()):
                 # make it so we can index by column name instead of column position
                 record = dict((field_description[0], field_value) for field_description, field_value in zip(fields, record))
+                if record['ReachCode'].strip() == "":
+                    print "Skipping lake with no reachcode and permanent_id=%s" % record['Permanent_'].strip()
 
                 # fetch the existing hstore for the lake, which tells us when
                 # each column was modified
