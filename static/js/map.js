@@ -33,10 +33,21 @@ $(document).ready(function(){
         layers.facilities_kml.redraw(true);
     })
 
+    // make the KML layers clickable
+    var control = new OpenLayers.Control.SelectFeature([layers.lakes_kml, layers.facilities_kml])
+    // this allows the map to be dragged when the mouse is down on one of this
+    // layer's items
+    control.handlers.feature.stopDown = false;
+    map.addControl(control)
+    control.activate()
+
     // when the lake kml is clicked notify the map
     layers.lakes_kml.events.register("featureselected", layers.lakes_kml_layer, function(evt){
         var feature = this.selectedFeatures[0];
         $('#map').trigger('lake:selected', {feature: feature});
+        // we have to unselect the feature to be able to click it again,
+        // without clicking on the map. It's lame
+        control.unselectAll();
     });
 
     // render a popup window when a facility is clicked
@@ -50,17 +61,15 @@ $(document).ready(function(){
             null,
             event.feature.attributes.description,
             null,
-            true
+            true,
+            function(){
+                map.removePopup(popup);
+                // we have to unselect the feature to be able to click it again,
+                // without clicking on the map. It's lame
+                control.unselectAll();
+            }
         ));
     });
-
-    // make the KML layers clickable
-    var control = new OpenLayers.Control.SelectFeature([layers.lakes_kml, layers.facilities_kml])
-    // this allows the map to be dragged when the mouse is down on one of this
-    // layer's items
-    control.handlers.feature.stopDown = false;
-    map.addControl(control)
-    control.activate()
 
     // zoom the map
     var url = $.url();
