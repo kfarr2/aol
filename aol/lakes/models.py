@@ -154,7 +154,7 @@ class NHDLakeManager(models.Manager):
 
 class NHDLake(models.Model):
     reachcode = models.CharField(max_length=32, primary_key=True)
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=255, blank=True)
     permanent_id = models.CharField(max_length=64)
     fdate = models.DateField()
     ftype = models.IntegerField()
@@ -166,8 +166,8 @@ class NHDLake(models.Model):
     gnis_name = models.CharField(max_length=255)
     area_sq_km = models.FloatField()
     elevation = models.FloatField()
-    parent = models.ForeignKey('self', null=True, db_column="parent")
-    aol_page = models.IntegerField(null=True)
+    parent = models.ForeignKey('self', null=True, db_column="parent", blank=True)
+    aol_page = models.IntegerField(null=True, blank=True)
     body = models.TextField()
 
     fishing_zone = models.ForeignKey('FishingZone', null=True)

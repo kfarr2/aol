@@ -7,35 +7,19 @@ from django.contrib.flatpages.forms import FlatpageForm as FPF
 from aol.lakes.models import Document, NHDLake, LakeCounty, Photo, Plant, LakePlant
 
 class LakeForm(forms.ModelForm):
-    def save(self, *args, **kwargs):
-        """
-        We need to override the save method because of the LakeCounty m2m
-        table
-        """
-        kwargs['commit'] = False
-        super(LakeForm, self).save(*args, **kwargs)
-        self.instance.save()
-        # save the m2m
-        # delete all existing counties
-        LakeCounty.objects.filter(lake=self.instance).delete()
-        # add all the counties from the form
-        for county in self.cleaned_data['county_set']:
-            LakeCounty(lake=self.instance, county=county).save()
-
     class Meta:
         model = NHDLake
         fields = (
             'title',
-            'body',
             'gnis_id',
             'gnis_name',
-            'reachcode',
-            'fishing_zone',
-            'huc6',
-            'county_set',
+            'body',
+            'parent',
+            'aol_page',
         )
         widgets = {
-            "body": forms.widgets.Textarea(attrs={"class": "ckeditor"})
+            "body": forms.widgets.Textarea(attrs={"class": "ckeditor"}),
+            "parent": forms.widgets.TextInput,
         }
 
 class DeletableModelForm(forms.ModelForm):
@@ -79,7 +63,7 @@ class DocumentForm(DeletableModelForm):
     def __init__(self, *args, **kwargs):
         # initialize the rank with the highest rank + 1
         if kwargs['instance'].pk is None:
-            kwargs['instance'].rank = Document.objects.filter(lake=kwargs['instance'].lake).aggregate(Max('rank'))['rank__max'] + 1
+            kwargs['instance'].rank = (Document.objects.filter(lake=kwargs['instance'].lake).aggregate(Max('rank'))['rank__max'] or 0) + 1
 
         super(DocumentForm, self).__init__(*args, **kwargs)
 
