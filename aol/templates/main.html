@@ -9,6 +9,10 @@
             {% endif %}
 
             {% block content %}{% endblock %}
+
+            <hr />
+            <div id='home-footer'><a href="http://www.clr.pdx.edu/">Center for Lakes &amp; Reservoirs</a> | <a href="http://www.pdx.edu/geography/center-for-spatial-analysis-and-research">Center for Spatial Analysis &amp; Research</a> | <a href="http://www.pdx.edu/cupa/">College of Urban &amp; Public Affairs</a> | <a href="http://www.pdx.edu/arc/">Academic &amp; Research Computing</a> | <a href="http://www.oregon.gov/DEQ/Pages/index.aspx">Oregon Department of Environmental Quality</a>
+                <br>&copy; 1985-{% now "Y" %} Atlas of Oregon Lakes. For technical support <a href="/contact">contact us</a></div>
         </div>
         {% block footer %}
             {% if sql_queries %} 
