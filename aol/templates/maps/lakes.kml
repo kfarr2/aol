@@ -4,8 +4,8 @@
         <name>lakes</name>
         <Style id="lake">
             <LineStyle>
-                <color>ff0088ff</color>
-                <width>10</width>
+                <color>ffffffff</color>
+                <width>2</width>
             </LineStyle>
             <PolyStyle>
                 <color>00ffffff</color>
