@@ -4,8 +4,10 @@ from django.shortcuts import render, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.flatpages.models import FlatPage
-from aol.lakes.models import NHDLake, Photo, Document, Photo, Plant 
-from .forms import DocumentForm, LakeForm, PhotoForm, PlantForm, FlatPageForm
+from aol.lakes.models import NHDLake, Plant 
+from aol.photos.models import Photo
+from aol.documents.models import Document
+from .forms import LakeForm, PlantForm, FlatPageForm
 
 @login_required
 def listing(request):
@@ -63,64 +65,6 @@ def edit_lake(request, reachcode):
         "form": form,
         "photos": photos,
         "documents": documents,
-    })
-
-@login_required
-def edit_photo(request, reachcode=None, photo_id=None):
-    """
-    The add/edit page for a photo. If a photo_id is passed in, we edit. If the
-    reachcode is passed in, we create
-    """
-    try:
-        photo = Photo.objects.get(pk=photo_id)
-        lake = photo.lake
-    except Photo.DoesNotExist:
-        # create a new photo with a foreign key to the lake
-        lake = get_object_or_404(NHDLake, reachcode=reachcode)
-        photo = Photo(lake=lake)
-
-    if request.POST:
-        form = PhotoForm(request.POST, request.FILES, instance=photo)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Photo %s" % "Edited" if photo_id else "Created")
-            return HttpResponseRedirect(reverse("admin-edit-lake", args=(lake.pk,)))
-    else:
-        form = PhotoForm(instance=photo)
-
-    return render(request, "admin/edit_photo.html", {
-        "lake": lake,
-        "photo": photo,
-        "form": form,
-    })
-
-@login_required
-def edit_document(request, reachcode=None, document_id=None):
-    """
-    The add/edit page for a document. If a document_id is passed in, we edit. If the
-    reachcode is passed in, we create
-    """
-    try:
-        document = Document.objects.get(pk=document_id)
-        lake = document.lake
-    except Document.DoesNotExist:
-        # create a new document with a foreign key to the lake
-        lake = get_object_or_404(NHDLake, reachcode=reachcode)
-        document = Document(lake=lake)
-
-    if request.POST:
-        form = DocumentForm(request.POST, request.FILES, instance=document)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Document %s" % "Edited" if document_id else "Created")
-            return HttpResponseRedirect(reverse("admin-edit-lake", args=(lake.pk,)))
-    else:
-        form = DocumentForm(instance=document)
-
-    return render(request, "admin/edit_document.html", {
-        "lake": lake,
-        "document": document,
-        "form": form,
     })
 
 @login_required

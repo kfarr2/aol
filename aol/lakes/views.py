@@ -3,45 +3,86 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse 
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
-from .models import Photo, Document, NHDLake, LakePlant
+from django.views.decorators.cache import cache_page
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from aol.documents.models import Document
+from aol.photos.models import Photo
+from .models import NHDLake, LakePlant
 
+#@cache_page(60 * 15)
 def listing(request, letter=None):
     """Display a list of all the lakes in the Atlas, with pagination"""
-    letters = string.ascii_uppercase
-
     lakes = None
+    important_lakes = None
+    non_important_lakes = None
+
     if letter is not None:
         letter = letter.upper()
-        lakes = list(NHDLake.objects.important_lakes(starts_with=letter))
+        lakes = list(NHDLake.objects.by_letter(letter=letter))
+        important_lakes = NHDLake.objects.important_lakes()
+
+        # mark up the lake objects with their important_lake infomation
+        for lake in lakes:
+            lake.important_features = important_lakes.get(lake.pk, {})
+
+        # we want to make important lakes float to the top
+        lakes.sort(key=lambda l: -1 if l.important_features else 0)
+
+        paginator = Paginator(lakes, 100)
+        page = request.GET.get('page')
+        try:
+            lakes = paginator.page(page)
+        except PageNotAnInteger:
+            # If page is not an integer, deliver first page.
+            lakes = paginator.page(1)
+        except EmptyPage:
+            # If page is out of range (e.g. 9999), deliver last page of results.
+            lakes = paginator.page(paginator.num_pages)
+
+        # unfortunately, we have to create two iterables to simplify the template logic
+        # one is for important lakes, the other is not non important lakes
+        important_lakes = [l for l in lakes if l.important_features]
+        non_important_lakes = [l for l in lakes if not l.important_features]
 
     return render(request, "lakes/listing.html", {
-        "letters": letters,
+        "letters": string.ascii_uppercase,
         "lakes": lakes,
         "letter": letter,
+        "important_lakes": important_lakes,
+        "non_important_lakes": non_important_lakes,
     })
 
 def detail(request, reachcode, template=None):
     """Display the detail view for an individual lake"""
     lake = get_object_or_404(NHDLake, reachcode=reachcode)
     photos = [p for p in Photo.objects.filter(lake=lake) if p.exists()]
-    documents = Document.objects.filter(lake=lake)
+    documents = Document.objects.filter(lake=lake).exclude(type=Document.MAP)
+    maps = list(Document.objects.filter(lake=lake, type=Document.MAP))
     lake_plants = LakePlant.objects.filter(lake=lake).select_related("plant")
     return render(request, template or "lakes/detail.html", {
         "lake": lake,
         "photos": photos,
         "documents": documents,
         "lake_plants": lake_plants,
+        "maps": maps,
     })
 
 def search(request):
     q = request.GET.get('q','')
     if "q" in request.GET:
-        lakes = list(NHDLake.objects.search(query=q))
+        lakes = list(NHDLake.objects.search(query=q)[:100])
         if len(lakes) == 1:
             reachcode = qs[0].reachcode
             return HttpResponseRedirect(reverse('lakes-detail', kwargs={'reachcode':reachcode}))
+
+        important_lakes = NHDLake.objects.important_lakes()
+        # mark up the lake objects with their important_lake infomation
+        for lake in lakes:
+            lake.important_features = important_lakes.get(lake.pk, {})
   
     return render(request, "lakes/results.html", {
         'lakes': lakes, 
         'query':q,
     })
+
+

@@ -2,7 +2,8 @@ import json
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Q
-from aol.lakes.models import NHDLake, Photo, Document, Facility
+from aol.lakes.models import NHDLake
+from aol.facilities.models import Facility
 from aol.lakes.views import detail
 
 def home(request):
@@ -30,6 +31,7 @@ def facilities(request):
         "rows": facilities,
     })
 
+
 def panel(request, reachcode):
     """
     Return the HTML for the information panel displayed when a lake is
@@ -42,6 +44,6 @@ def search(request):
     Return the HTML when a search is performed on the map
     """
     query = request.GET.get("query", "")
-    lakes = NHDLake.objects.search(query)
+    lakes = NHDLake.objects.search(query)[:100]
     return render(request, "maps/_results.html", {"lakes": lakes})
 

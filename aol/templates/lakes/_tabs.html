@@ -8,20 +8,19 @@
 
 <div class="tab-content">
     <div class="tab-pane active" id='maps'>
-        <p><strong>Area:</strong> {{ lake.area|floatformat }} acres | <strong>Shoreline:</strong> {{ lake.perimeter|floatformat }} mi</p>
-        {% if lake.watershed_tile_url %}
-            <div id='watershed' class='lake-watershed lake-map'>
-                <h4>Watershed</h4>
-                <img src="{{ lake.watershed_tile_url }}" /> 
-            </div>
+        {% if maps|length == 1 %}
+            {% with map=maps|first %}
+                <a href="{{ map.url }}">{{ map.name }}</a>
+            {% endwith %}
+        {% elif maps|length > 1 %}
+            <ul>
+                {% for map in maps %}
+                    <li><a href="{{ mapurl }}">{{ map.name }}</a></li>
+                {% endfor %}
+            </ul>
         {% endif %}
 
-        {% if lake.basin_tile_url %}
-            <div id='basin' class='lake-waterbasin lake-map'>
-                <h4>Basin</h4>
-                <img src="{{ lake.basin_tile_url }}" />
-            </div>
-        {% endif %}
+        {% if maps %}<hr />{% endif %}
 
         <select id='map-select' >
             {% if lake.watershed_tile_url %}
@@ -32,6 +31,18 @@
                 <option value='#basin'>Basin</option>
             {% endif %}
         </select>
+
+        {% if lake.watershed_tile_url %}
+            <div id='watershed' class='lake-watershed lake-map'>
+                <img src="{{ lake.watershed_tile_url }}" /> 
+            </div>
+        {% endif %}
+
+        {% if lake.basin_tile_url %}
+            <div id='basin' class='lake-waterbasin lake-map'>
+                <img src="{{ lake.basin_tile_url }}" />
+            </div>
+        {% endif %}
     </div>
 
     <div class="tab-pane" id='mussels'>
@@ -61,12 +72,16 @@
 
     <div class="tab-pane" id='plants'>
         {% if lake_plants %}
+            <p>Plants are categorized as native to Oregon, on ODA Noxious Weed List, on the Federal Noxious Weed List, or non-native but not the noxious weed lists.</p>
+            <p><a href="http://www.oregon.gov/ODA/PLANT/WEEDS/docs/pdf/Policy2013.pdf">ODA Class A</a> - weeds either unknown or with small enough infestations to make eradication or containment possible; targeted for eradication or intensive control.</p>
+            <p><a href="http://www.aphis.usda.gov/plant_health/plant_pest_info/weeds/downloads/weedlist.pdf">ODA Class B</a> - regionally abundant weeds (may have limited distribution in some counties); targeted for local/regional control on case-by-case basis.</p>
+            <p>Federal Noxious Weed List - plants determined by USDA to be serious threats to U.S. agriculture, irrigation, navigation, public health or the environment (7 C.F.R. 360.200)</p>
+
             <table class="table table-condensed table-striped">
                 <thead>
                     <tr>
                         <th>Date</th>
                         <th>Species</th>
-                        <th>AIS</th>
                         <th>Source</th>
                     </tr>
                 </thead>
@@ -75,7 +90,6 @@
                         <tr>
                             <td class="nowrap">{{ lake_plant.observation_date|default:"-" }}</td>
                             <td>{{ lake_plant.plant.name }} ({{ lake_plant.plant.common_name }})</td>
-                            <td>{{ lake_plant.plant.is_aquatic_invasive }}</td>
                             <td>CLR</td>
                         </tr>
                     {% endfor %}
@@ -90,7 +104,7 @@
         {% if documents %}
             <ul>
                 {% for doc in documents %}
-                    <li><a href="{{ doc.file.url }}">{{ doc.name }}</a></li>
+                    <li><a href="{{ doc.url }}">{{ doc.name }}</a></li>
                 {% endfor %}
             </ul>
         {% else %}

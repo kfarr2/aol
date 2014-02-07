@@ -4,7 +4,8 @@ from django.db.models import Max
 from django.db import transaction
 from django.utils.translation import ugettext as _
 from django.contrib.flatpages.forms import FlatpageForm as FPF
-from aol.lakes.models import Document, NHDLake, LakeCounty, Photo, Plant, LakePlant
+from aol.utils.forms import DeletableModelForm
+from aol.lakes.models import NHDLake, LakeCounty, Plant, LakePlant
 
 class LakeForm(forms.ModelForm):
     class Meta:
@@ -22,61 +23,12 @@ class LakeForm(forms.ModelForm):
             "parent": forms.widgets.TextInput,
         }
 
-class DeletableModelForm(forms.ModelForm):
-    """
-    This form adds a do_delete field which is checked when the modelform is
-    saved. If it is true, the model instance is deleted
-    """
-    do_delete = forms.BooleanField(required=False, initial=False, label="Delete")
-
-    def __init__(self, *args, **kwargs):
-        super(DeletableModelForm, self).__init__(*args, **kwargs)
-        # if we are adding a new model (the instance.pk will be None), then
-        # there is no reason to have a delete option, since the object hasn't
-        # been created yet
-        if self.instance.pk is None:
-            self.fields.pop("do_delete")
-
-    def save(self, *args, **kwargs):
-        if self.cleaned_data.get('do_delete'):
-            self.instance.delete()
-        else:
-            super(DeletableModelForm, self).save(*args, **kwargs)
-
 class FlatPageForm(FPF, DeletableModelForm):
     class Meta(FPF.Meta):
         widgets = {
             "content": forms.widgets.Textarea(attrs={"class": "ckeditor"})
         }
 
-
-
-class DocumentForm(DeletableModelForm):
-    class Meta:
-        model = Document
-        fields = (
-            'name',
-            'file',
-            'rank',
-        )
-
-    def __init__(self, *args, **kwargs):
-        # initialize the rank with the highest rank + 1
-        if kwargs['instance'].pk is None:
-            kwargs['instance'].rank = (Document.objects.filter(lake=kwargs['instance'].lake).aggregate(Max('rank'))['rank__max'] or 0) + 1
-
-        super(DocumentForm, self).__init__(*args, **kwargs)
-
-
-class PhotoForm(DeletableModelForm):
-    class Meta:
-        model = Photo
-        fields = (
-            'caption',
-            'author',
-            'file',
-            'taken_on',
-        )
 
 
 class PlantForm(forms.Form):
