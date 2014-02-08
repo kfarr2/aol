@@ -215,7 +215,7 @@
 },
 {
  "pk": 1,
- "model": "lakes.photo",
+ "model": "photos.photo",
  "fields": {
   "file": "photos/test.jpg",
   "taken_on": "2010-10-10",
@@ -226,12 +226,13 @@
 }, 
 {
  "pk": 1,
- "model": "lakes.document",
+ "model": "documents.document",
  "fields": {
   "file": "photos/test.jpg",
   "uploaded_on": "2010-10-10T10:10:10-08:00",
   "rank": "1",
-  "lake": 123
+  "lake": 123,
+  "type": 0
  }
 }
 ]

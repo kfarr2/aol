@@ -5,6 +5,8 @@ from fnmatch import fnmatch
 here = lambda *path: os.path.normpath(os.path.join(os.path.dirname(__file__), *path))
 ROOT = lambda *path: here("../../", *path)
 
+TEST_RUNNER = 'aol.testrunner.AOLRunner'
+
 AUTH_USER_MODEL = 'users.User'
 
 LOGIN_URL = '/admin/login'

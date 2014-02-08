@@ -1,7 +1,11 @@
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from aol.lakes.models import NHDLake as Lake, Photo
-from ..forms import LakeForm, PhotoForm
+from aol.lakes.models import NHDLake as Lake
+from ..forms import LakeForm
+from aol.documents.forms import DocumentForm
+from aol.documents.models import Document
+from aol.photos.models import Photo
+from aol.photos.forms import PhotoForm
 
 class LakeFormTest(TestCase):
     fixtures = ['lakes.json']
@@ -16,15 +20,11 @@ class LakeFormTest(TestCase):
             "reachcode": lake.reachcode,
             "fishing_zone": lake.fishing_zone.pk,
             "huc6": lake.huc6.pk,
-            # set some new counties via their pk
-            "county_set": [2, 3]
         }
 
         form = LakeForm(data, instance=lake)
         self.assertTrue(form.is_valid())
         form.save()
-        # make sure the counties got changed in the save method
-        self.assertEqual(set(c.pk for c in lake.county_set.all()), set(data['county_set']))
 
     def test_deletable_model_form(self):
         # this tests the DeletableModelForm by testing PhotoForm (which subclasses it)

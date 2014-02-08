@@ -72,7 +72,7 @@ def search(request):
     if "q" in request.GET:
         lakes = list(NHDLake.objects.search(query=q)[:100])
         if len(lakes) == 1:
-            reachcode = qs[0].reachcode
+            reachcode = lakes[0].reachcode
             return HttpResponseRedirect(reverse('lakes-detail', kwargs={'reachcode':reachcode}))
 
         important_lakes = NHDLake.objects.important_lakes()
