@@ -1,3 +1,4 @@
+import string
 import requests
 import os
 import re
@@ -7,14 +8,22 @@ from django.db.models import Q
 from django.db.models.sql.compiler import SQLCompiler
 from django.db import connections, transaction, connection
 from django.contrib.gis.gdal import SpatialReference, CoordTransform
+from django.core.cache import cache
 from django.contrib.gis.geos import Point
-from PIL import Image
 
 # This monkey patch allows us to write subqueries in the `tables` argument to the
 # QuerySet.extra method. For example Foo.objects.all().extra(tables=["(SELECT * FROM Bar) t"])
 # See: http://djangosnippets.org/snippets/236/#c3754
 _quote_name_unless_alias = SQLCompiler.quote_name_unless_alias
 SQLCompiler.quote_name_unless_alias = lambda self, name: name if name.strip().startswith('(') else _quote_name_unless_alias(self, name)
+
+def dictfetchall(cursor):
+    "Returns all rows from a cursor as a dict"
+    desc = cursor.description
+    return [
+        dict(zip([col[0] for col in desc], row))
+        for row in cursor.fetchall()
+    ]
 
 class NHDLakeManager(models.Manager):
     def get_query_set(self):
@@ -23,26 +32,21 @@ class NHDLakeManager(models.Manager):
         which have the types 390, 436 in the NHD. See
         http://nhd.usgs.gov/NHDv2.0_poster_6_2_2010.pdf
 
-        We also only want to get lakes with counties specified since some NHD
-        lakes are outside Oregon
+        We also only want to get lakes in oregon
         """
-        sql = """
-            (SELECT 
-                lake_county.reachcode, 
-                array_to_string(array_agg(county.altname ORDER BY county.altname), ', ') AS counties
-            FROM lake_county INNER JOIN county USING(county_id)
-            GROUP BY lake_county.reachcode
-            ) counties
-        """
-        qs = super(NHDLakeManager, self).get_query_set().filter(ftype__in=[390, 436])
+        qs = super(NHDLakeManager, self).get_query_set().filter(
+            ftype__in=[390, 436],
+            parent=None,
+            is_in_oregon=True
+        )
+        qs = qs.prefetch_related("county_set")
         qs = qs.extra(
-            select={"counties": "counties.counties"},
-            tables=[sql],
-            where=["counties.reachcode = nhd.reachcode"]
+            select={"is_important": "has_mussels OR has_docs OR has_photos OR has_plants OR (aol_page IS NOT NULL)"},
+            order_by=['-is_important'],
         )
         return qs
 
-    def search(self, query, limit=100):
+    def search(self, query):
         """
         This searches all the NHDLake objects with a gnis_name, title, gnis_id
         or reachcode containing the particular query keyword
@@ -54,72 +58,19 @@ class NHDLakeManager(models.Manager):
             order_by=["-lake_area"],
             where=["lake_geom.reachcode = nhd.reachcode"]
         )
-        if limit:
-            qs = qs[:limit]
         return qs
 
-    def important_lakes(self, starts_with=None):
-        """
-        Important lakes are ones that appear in the original AOL, or have
-        lake_plant, document, or photos attached to them. These lakes appear on
-        the alphabetical index of lakes on the site
-        """
-        # for the name of a lake, either use the title (from the original AOL) or the gnis_name
-        name_column = "COALESCE(NULLIF(title, ''), gnis_name)"
-        # for the alphabetic name, replace "Lake Blah" with just "Blah"
-        alphabetic_name_column = "regexp_replace(%s, '^[lL]ake\s*', '')" % name_column
-
-        where_clause = ""
-        where_params = {}
-        if starts_with:
-            where_clause = " AND (lower(" + name_column + ") LIKE %(starts_with)s OR lower(" + alphabetic_name_column + ") LIKE %(starts_with)s )"
-            where_params = {"starts_with": starts_with.lower() + "%"}
-
-        results = self.raw(("""
-        SELECT 
-            reachcode, 
-            permanent_id,
-            fdate, 
-            ftype, 
-            fcode, 
-            shape_length, 
-            shape_area, 
-            resolution, 
-            gnis_id,
-            gnis_name, 
-            area_sq_km, 
-            parent,
-            aol_page,
-            elevation,
-            title, 
-            fishing_zone_id, 
-            huc6_id,
-            array_to_string(array_agg(county.altname ORDER BY county.altname), ', ') AS counties,
-            """ + alphabetic_name_column + """ AS alphabetic_title
-            --body
-        FROM 
-            nhd
-        INNER JOIN
-            lake_county USING(reachcode)
-        INNER JOIN
-            county USING(county_id)
-        WHERE reachcode IN(
-            -- get all reachcodes for lakes with plants
-            SELECT reachcode FROM "lake_plant" GROUP BY reachcode HAVING COUNT(*) >= 1
-            UNION
-            -- get all reachcodes for lakes with documents
-            SELECT reachcode FROM "document" GROUP BY reachcode HAVING COUNT(*) >= 1
-            UNION
-            -- get all reachcodes for lakes with photos
-            SELECT reachcode FROM "photo" GROUP BY reachcode HAVING COUNT(*) >= 1
-            UNION
-            -- get all original AOL lakes
-            SELECT reachcode FROM "nhd" WHERE aol_page IS NOT NULL
-        ) %(where_clause)s
-        GROUP BY reachcode, permanent_id, fdate, ftype, fcode, shape_length, shape_area, resolution, gnis_id, gnis_name, area_sq_km, parent, aol_page,  elevation, title, fishing_zone_id, huc6_id
-        ORDER BY """ + name_column) % {"where_clause": where_clause}, where_params)
-
-        return results
+    def by_letter(self, letter):
+        """Return a queryset of all the lakes that start with the letter"""
+        letter = letter.lower()
+        qs = self.all().extra(
+            select={"alphabetic_title": "regexp_replace(COALESCE(NULLIF(title, ''), gnis_name), '^[lL]ake\s*', '')"},
+            where=["(lower(COALESCE(NULLIF(title, ''), gnis_name)) LIKE %s OR lower(regexp_replace(COALESCE(NULLIF(title, ''), gnis_name), '^[lL]ake\s*', '')) LIKE %s )"],
+            params=(letter + "%",)*2,
+            # we want to list important lakes first, and then sort by the alphabetic title
+            order_by=['-is_important', "alphabetic_title"],
+        )
+        return qs
 
     def to_kml(self, scale, bbox):
         """
@@ -175,6 +126,18 @@ class NHDLake(models.Model):
     county_set = models.ManyToManyField('County', through="LakeCounty")
     plants = models.ManyToManyField('Plant', through="LakePlant")
 
+    # denormalized fields
+    # unfortunately, for performance reasons, we need to cache whether a lake
+    # has plant data, has mussels, was in the original AOL, has docs, has
+    # photos etc
+    has_mussels = models.BooleanField(default=False, blank=True)
+    has_plants = models.BooleanField(default=False, blank=True)
+    has_docs = models.BooleanField(default=False, blank=True)
+    has_photos = models.BooleanField(default=False, blank=True)
+    # some lakes in the NHD are not in oregon, so we cache this value so we
+    # don't have to join on the lake_county table
+    is_in_oregon = models.BooleanField(default=False, blank=True)
+
     objects = NHDLakeManager()
     unfiltered = models.Manager()
 
@@ -183,6 +146,56 @@ class NHDLake(models.Model):
 
     def __unicode__(self):
         return self.title or self.gnis_name or self.pk
+
+    @classmethod
+    def update_cached_fields(cls):
+        """
+        Important lakes are lakes with plant data, mussel data, photos docs, etc.
+        We cache these booleans (has_mussels, has_plants, etc) on the model
+        itself for performance reasons, so this class method needs to be called
+        to refresh thos booleans.
+
+        It also refreshes the is_in_oregon flag
+        """
+        cursor = connection.cursor()
+        results = cursor.execute("""
+            SELECT 
+                reachcode, 
+                MAX(has_plants) AS has_plants, 
+                MAX(has_docs) AS has_docs, 
+                MAX(has_photos) AS has_photos, 
+                MAX(has_aol_page) AS has_aol_page,
+                MAX(has_mussels) AS has_mussels
+            FROM (
+                -- get all reachcodes for lakes with plants
+                SELECT reachcode, 1 AS has_plants, 0 AS has_docs, 0 AS has_photos, 0 AS has_aol_page, 0 AS has_mussels FROM "lake_plant" GROUP BY reachcode HAVING COUNT(*) >= 1
+                UNION
+                -- get all reachcodes for lakes with documents
+                SELECT reachcode, 0 AS has_plants, 1 AS has_docs, 0 AS has_photos, 0 AS has_aol_page, 0 AS has_mussels FROM "document" GROUP BY reachcode HAVING COUNT(*) >= 1
+                UNION
+                -- get all reachcodes for lakes with photos
+                SELECT reachcode, 0 AS has_plants, 0 AS has_docs, 1 AS has_photos, 0 AS has_aol_page, 0 AS has_mussels FROM "photo" GROUP BY reachcode HAVING COUNT(*) >= 1
+                UNION
+                -- get all original AOL lakes
+                SELECT reachcode, 0 AS has_plants, 0 AS has_docs, 0 AS has_photos, 1 AS has_aol_page, 0 AS has_mussels FROM "nhd" WHERE aol_page IS NOT NULL
+                UNION
+                SELECT DISTINCT reachcode, 0 AS has_plants, 0 AS has_docs, 0 AS has_photos, 0 AS has_aol_page, 1 AS has_mussels FROM "display_view" INNER JOIN "lake_geom" ON ST_DWITHIN(ST_TRANSFORM(display_view.the_geom, 3644), lake_geom.the_geom, 10)
+            ) k
+            GROUP BY reachcode
+        """)
+        for row in dictfetchall(cursor):
+            NHDLake.unfiltered.filter(reachcode=row['reachcode']).update(
+                has_plants=row['has_plants'],
+                has_docs=row['has_docs'],
+                has_photos=row['has_photos'],
+                has_mussels=row['has_mussels']
+            )
+
+        # now update the is_in_oregon flag
+        cursor.execute("""
+            WITH foo AS (SELECT COUNT(*) AS the_count, reachcode FROM lake_county GROUP BY reachcode)
+            UPDATE nhd SET is_in_oregon = foo.the_count > 0 FROM foo WHERE foo.reachcode = nhd.reachcode
+        """)
 
     @property
     def area(self):
@@ -282,21 +295,9 @@ class NHDLake(models.Model):
         status of the mussels
         """
         if not hasattr(self, "_mussels"):
-            distance = 0
-            cursor = connections['default'].cursor()
-            cursor.execute("""SELECT ST_ASEWKT(the_geom) as ewkt, ST_SRID(the_geom) AS srid FROM lake_geom WHERE reachcode = %s""", (self.reachcode,))
-            row = cursor.fetchone()
-            ewkt = row[0]
-            srid = row[1]
-
-            # in TEST mode we don't have a connection to the mussels DB so we assume this works
-            if "mussels" not in connections:
-                self._mussels = []
-                return self._mussels
-
-            # now query the mussels DB for mussels within a certain distance of this lake
-            mussels_cursor = connections['mussels'].cursor()
-            mussels_cursor.execute("""
+            distance = 10 # in meters since the 3644 projection is in meters
+            cursor = connection.cursor()
+            cursor.execute("""
                 SELECT 
                     DISTINCT
                     status as species,
@@ -305,11 +306,11 @@ class NHDLake(models.Model):
                 FROM 
                     display_view 
                 WHERE 
-                    ST_DWITHIN(ST_TRANSFORM(the_geom, %s), ST_GeomFromEWKT(%s), %s)
+                    ST_DWITHIN(ST_TRANSFORM(the_geom, 3644), (SELECT the_geom FROM lake_geom WHERE reachcode = %s), %s)
                 ORDER BY date_checked
-            """, (srid, ewkt, distance))
+            """, (self.pk, distance))
             results = []
-            for row in mussels_cursor:
+            for row in cursor:
                 results.append({
                     "species": row[0],
                     "date_checked": row[1],
@@ -395,80 +396,6 @@ class LakeCounty(models.Model):
         db_table = "lake_county"
 
 
-class Document(models.Model):
-    """
-    Stores all the documents attached to a lake like PDFs, and whatever else an
-    admin wants to upload (except Photos which are handled in their own model)
-    """
-    DOCUMENT_DIR = "pages/"
-
-    document_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=255)
-    file = models.FileField(upload_to=lambda instance, filename: instance.DOCUMENT_DIR + filename)
-    rank = models.IntegerField(verbose_name="Weight", help_text="Defines the order in which items are listed.")
-    uploaded_on = models.DateTimeField(auto_now_add=True)
-
-    lake = models.ForeignKey(NHDLake, db_column="reachcode")
-
-    class Meta:
-        db_table = 'document'
-        ordering = ['rank']
-
-
-class Photo(models.Model):
-    """Stores all the photos attached to a lake"""
-    PHOTO_DIR = "photos/"
-    THUMBNAIL_PREFIX = "thumbnail-"
-
-    photo_id = models.AutoField(primary_key=True)
-    file = models.FileField(upload_to=lambda instance, filename: instance.PHOTO_DIR + filename, db_column="filename")
-    taken_on = models.DateField(null=True, db_column="photo_date")
-    author = models.CharField(max_length=255)
-    caption = models.CharField(max_length=255)
-
-    lake = models.ForeignKey(NHDLake, db_column="reachcode")
-
-    class Meta:
-        db_table = "photo"
-
-    def exists(self):
-        """Returns True if the file exists on the filesystem"""
-        try:
-            open(self.file.path)
-        except IOError:
-            return False
-        return True
-
-    @property
-    def url(self):
-        """Returns the complete path to the photo from MEDIA_URL"""
-        return self.file.url
-
-    @property
-    def thumbnail_url(self):
-        """Returns the complete path to the photo's thumbnail from MEDIA_URL"""
-        return SETTINGS.MEDIA_URL + os.path.relpath(self._thumbnail_path, SETTINGS.MEDIA_ROOT)
-
-    @property
-    def _thumbnail_path(self):
-        """Returns the abspath to the thumbnail file, and generates it if needed"""
-        filename = self.THUMBNAIL_PREFIX + os.path.basename(self.file.name)
-        path = os.path.join(os.path.dirname(self.file.path), filename)
-        try:
-            open(path).close()
-        except IOError:
-            self._generate_thumbnail(path)
-
-        return path
-
-    def _generate_thumbnail(self, save_to_location):
-        """Generates a thumbnail and saves to to the save_to_location"""
-        SIZE = (400, 300)
-        im = Image.open(self.file.path)
-        im.thumbnail(SIZE, Image.ANTIALIAS)
-        im.save(save_to_location)
-
-
 class DeferGeomManager(models.Manager):
     """
     Models that use this manager will always defer the "the_geom" column. This
@@ -526,12 +453,13 @@ class County(models.Model):
 
 
 class Plant(models.Model):
-    plant_id = models.AutoField(primary_key=True) # Primary key for a plant row
-    name = models.CharField(max_length=255) # Scientific name of a plant
+    name = models.CharField(max_length=255, primary_key=True)
     common_name = models.CharField(max_length=255) # Common name of the plant
-    former_name = models.CharField(max_length=255) # Former name of the plant
-    plant_family = models.CharField(max_length=255) # The family name that the plant belongs to
-    is_aquatic_invasive = models.BooleanField(default=False)
+    noxious_weed_designation = models.CharField(max_length=255, default="", choices=(
+        ("", ""),
+        ("A", "A"),
+        ("B", "B"),
+    ))
 
     class Meta:
         db_table = "plant"
@@ -545,92 +473,15 @@ class LakePlant(models.Model):
     lake = models.ForeignKey(NHDLake, db_column="reachcode")
     plant = models.ForeignKey("Plant")
     observation_date = models.DateField(null=True)
+    source = models.CharField(max_length=255, default="", choices=(
+        ("", ""),
+        ("CLR", "Center for Lakes and Reservoir"),
+        ("IMAP", "iMapInvasives"),
+    ))
+    survey_org = models.CharField(max_length=255)
 
     class Meta:
         db_table = "lake_plant"
         ordering = ['observation_date']
 
 
-class FacilityManager(models.Manager):
-    def to_kml(self, bbox):
-        return Facility.objects.all().extra(
-            select={'kml': 'st_askml(the_geom)'},
-            where=[
-                "the_geom && st_setsrid(st_makebox2d(st_point(%s, %s), st_point(%s, %s)), 3644)",
-            ],
-            params=bbox
-        )
-
-    def reimport(self):
-        """
-        Connects to the Oregon facility JSON endpoint and reimports all the
-        facilities
-        """
-        response = requests.get("https://data.oregon.gov/resource/spxe-q5vj.json")
-        js = response.json()
-        # the data source uses WGS84 coords, so we have to transform them
-        gcoord = SpatialReference(4326)
-        mycoord = SpatialReference(3644)
-        trans = CoordTransform(gcoord, mycoord)
-        with transaction.atomic():
-            # wipe out the existing facilties
-            Facility.objects.all().delete()
-            for row in js:
-                try:
-                    p = Point(float(row['location']['longitude']), float(row['location']['latitude']), srid=4326)
-                except KeyError:
-                    continue
-                p.transform(trans)
-
-                f = Facility(
-                    name=row['boating_facility_name'],
-                    managed_by=row.get('managed_by', ''),
-                    telephone=row.get('telephone', {}).get('phone_number', ''),
-                    ramp_type=row.get('ramp_type_lanes', ''),
-                    trailer_parking=row.get('trailer_parking', ''),
-                    moorage=row.get('moorage', ''),
-                    launch_fee=row.get('launch_fee', ''),
-                    restroom=row.get('restroom', ''),
-                    supplies=row.get('supplies', ''),
-                    gas_on_water=row.get('gas_on_the_water', ''),
-                    diesel_on_water=row.get('diesel_on_the_water', ''),
-                    waterbody=row.get('waterbody', ''),
-                    fish_cleaning=row.get('fish_cleaning_station', ''),
-                    pumpout=row.get('pumpout', ''),
-                    dump_station=row.get('dump_station', ''),
-                    the_geom=p,
-                    icon_url=row.get('boater_services', ''),
-                )
-                f.save()
-
-
-class Facility(models.Model):
-    facility_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=254, db_column="facilityna")
-    waterbody = models.CharField(max_length=254)
-    islake = models.IntegerField()
-    type = models.CharField(max_length=254)
-    telephone = models.CharField(max_length=254) 
-    ramp_type = models.CharField(max_length=254, db_column="ramp_type_")
-    moorage = models.CharField(max_length=254) 
-    trailer_parking = models.CharField(max_length=254, db_column="trailer_pa")
-    transient = models.CharField(max_length=254)
-    launch_fee = models.CharField(max_length=254)
-    restroom = models.CharField(max_length=254)
-    supplies = models.CharField(max_length=254)
-    gas_on_water = models.CharField(max_length=254, db_column="gas_on_the")
-    diesel_on_water = models.CharField(max_length=254, db_column="diesel_on") 
-    fish_cleaning = models.CharField(max_length=254, db_column="fish_clean")
-    pumpout = models.CharField(max_length=254)
-    dump_station = models.CharField(max_length=254, db_column="dump_stati")
-    managed_by = models.CharField(max_length=254)
-    latitude = models.FloatField() 
-    longitude = models.FloatField()
-    boater_ser = models.CharField(max_length=254)
-    icon_url = models.CharField(max_length=254)
-    the_geom = models.PointField(srid=3644)
-
-    objects = FacilityManager()
-
-    class Meta:
-        db_table = "facility"

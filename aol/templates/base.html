@@ -7,6 +7,11 @@
         <script src="{{ STATIC_URL }}js/bootstrap.min.js"></script>
         <link href="{{ STATIC_URL }}css/main.css" rel="stylesheet" media="screen">
 		<link rel="icon" type="image/png" href="{{ STATIC_URL }}img/aol_favicon.png"/>
+        <script type="text/javascript">
+            $(document).ready(function(){
+                $('.has-tooltip').tooltip();
+            });
+        </script>
         {% block head %}{% endblock %}
     </head>
     <body>

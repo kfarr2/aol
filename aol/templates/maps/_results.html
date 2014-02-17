@@ -10,7 +10,7 @@
                 <tr>
                     <td>
                         <a class="zoom-to-view" data-reachcode="{{ lake.reachcode }}" data-minx="{{ lake.bounding_box.0 }}" data-miny="{{ lake.bounding_box.1 }}" data-maxx="{{ lake.bounding_box.2 }}" data-maxy="{{ lake.bounding_box.3 }}" href="{% url 'map' %}?minx={{ lake.bounding_box.0 }}&miny={{ lake.bounding_box.1 }}&maxx={{ lake.bounding_box.2 }}&maxy={{ lake.bounding_box.3 }}">{{ lake }} ({{ lake.reachcode }})</a><br />
-                        <em>{{ lake.county_set.all|join:", "|default:"Not in Oregon" }}</em>
+                        <em>{{ lake.counties|default:"Not in Oregon" }}</em>
                     </td>
             {% empty %}
                 <tr>

@@ -14,11 +14,5 @@
     <div class="alert alert-warning">Sorry, no lakes were found.</div>
 {% endif %}	
 
-<table class="table table-condensed table-striped">
-    {% for lake in lakes %}
-        <tr>
-            <td><a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">{{ lake }}</a> (<em>{{ lake.counties }}</em>)</td>
-        </tr>
-    {% endfor %}
-</table>
+{% include "lakes/_row.html" with lakes=lakes %}
 {% endblock %}

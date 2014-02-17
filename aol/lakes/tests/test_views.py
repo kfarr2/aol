@@ -23,7 +23,7 @@ class LakesTest(TestCase):
         '''test that a blank query returns all lakes'''
         lakes = list(Lake.objects.all())
         response = self.client.get("%s?q=%s" % (reverse('lakes-search'), "") )
-        self.assertEqual(len(lakes), response.context['lakes'].count())
+        self.assertEqual(len(lakes), len(response.context['lakes']))
  
     def test_search_title(self):
         '''test lake title query returns lake page assumes unique ttile which is true of test data'''

@@ -1,0 +1,35 @@
+<table class="table table-condensed table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th class="text-right">Reachcode</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for lake in lakes %}
+            <tr>
+                <td>
+                    <a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">{{ lake }}</a> (<em>{{ lake.counties }}</em>)
+                    {% if lake.is_important %}
+                        {% if lake.aol_page %}
+                            <span class="glyphicon glyphicon-book has-tooltip" title="In original Atlas of Oregon Lakes"></span>
+                        {% endif %} 
+                        {% if lake.has_photos %}
+                            <span class="glyphicon glyphicon-camera has-tooltip" title="Photos available"></span>
+                        {% endif %}
+                        {% if lake.has_docs %}
+                            <span class="glyphicon glyphicon-file has-tooltip" title="Downloadable documents available"></span>
+                        {% endif %}
+                        {% if lake.has_plants %}
+                            <span class="glyphicon glyphicon-leaf has-tooltip" title="Plant data available"></span>
+                        {% endif %}
+                        {% if lake.has_mussels %}
+                            <span class="glyphicon glyphicon-warning-sign has-tooltip" title="Mussel data available"></span>
+                        {% endif %}
+                    {% endif %}
+                </td>
+                <td class="text-right">{{ lake.pk }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

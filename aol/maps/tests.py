@@ -1,7 +1,8 @@
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.contrib.gis.geos import GEOSGeometry
-from aol.lakes.models import Facility, NHDLake as Lake
+from aol.lakes.models import NHDLake
+from aol.facilities.models import Facility
 
 class HomeTest(TestCase):
     fixtures = ['lakes.json']
@@ -33,7 +34,7 @@ class FacilitiesTest(TestCase):
             telephone="555",
             ramp_type="asdf",
             moorage="asdf",
-            trailer_park="asdf",
+            trailer_parking="asdf",
             transient="asdf",
             launch_fee="asdf",
             restroom="asdf",
@@ -49,7 +50,6 @@ class FacilitiesTest(TestCase):
             boater_ser="asdf",
             icon_url="asdf",
             the_geom=GEOSGeometry("Point(30 20)"),
-            lake=Lake.objects.get(reachcode=123)
         )
         self.f.save()
 
