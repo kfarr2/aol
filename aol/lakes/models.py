@@ -453,12 +453,13 @@ class County(models.Model):
 
 
 class Plant(models.Model):
-    plant_id = models.AutoField(primary_key=True) # Primary key for a plant row
-    name = models.CharField(max_length=255) # Scientific name of a plant
+    name = models.CharField(max_length=255, primary_key=True)
     common_name = models.CharField(max_length=255) # Common name of the plant
-    former_name = models.CharField(max_length=255) # Former name of the plant
-    plant_family = models.CharField(max_length=255) # The family name that the plant belongs to
-    is_aquatic_invasive = models.BooleanField(default=False)
+    noxious_weed_designation = models.CharField(max_length=255, default="", choices=(
+        ("", ""),
+        ("A", "A"),
+        ("B", "B"),
+    ))
 
     class Meta:
         db_table = "plant"
@@ -472,6 +473,12 @@ class LakePlant(models.Model):
     lake = models.ForeignKey(NHDLake, db_column="reachcode")
     plant = models.ForeignKey("Plant")
     observation_date = models.DateField(null=True)
+    source = models.CharField(max_length=255, default="", choices=(
+        ("", ""),
+        ("CLR", "Center for Lakes and Reservoir"),
+        ("IMAP", "iMapInvasives"),
+    ))
+    survey_org = models.CharField(max_length=255)
 
     class Meta:
         db_table = "lake_plant"
