@@ -35,7 +35,6 @@ urlpatterns = patterns('',
     url(r'^admin/edit/document/(?P<document_id>\d+)?$', documents.edit, name='admin-edit-document'),
     url(r'^admin/add/document/(?P<reachcode>.+)?$', documents.edit, name='admin-add-document'),
     url(r'^admin/add/flatpage/?$', customadmin.edit_flatpage, name='admin-add-flatpage'),
-    url(r'^admin/add/plants?$', customadmin.add_plant, name='admin-add-plant'),
     
     # login logout
     url(r'^admin/login/$', 'djangocas.views.login', name='admin-login'),

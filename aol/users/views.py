@@ -7,7 +7,7 @@ from django.contrib.flatpages.models import FlatPage
 from aol.lakes.models import NHDLake, Plant 
 from aol.photos.models import Photo
 from aol.documents.models import Document
-from .forms import LakeForm, PlantForm, FlatPageForm
+from .forms import LakeForm, FlatPageForm
 
 @login_required
 def listing(request):
@@ -67,23 +67,3 @@ def edit_lake(request, reachcode):
         "documents": documents,
     })
 
-@login_required
-def add_plant(request):
-    """ 
-    This page will have a textbox for user to input plant info,
-    which will be delimited by Tab character.
-    """
-    if request.POST:
-        form = PlantForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, " Plants information is saved ")
-            return HttpResponseRedirect(reverse("admin-add-plant"))
-    else:
-        form = PlantForm()
-
-    return render(request, "admin/add_plant.html", {
-        "form": form,
-    })
-
-    

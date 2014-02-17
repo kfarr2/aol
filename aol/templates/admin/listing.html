@@ -1,9 +1,6 @@
 {% extends "main.html" %}
 {% block content %}
 
-<h3>Plant Information</h3>
-<a href="{% url 'admin-add-plant' %}">Import Plant Information</a>
-
 <h3>Pages (<a href="{% url 'admin-add-flatpage' %}">Add</a>)</h3>
 <table>
 {% for page in flatpages %}
