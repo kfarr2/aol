@@ -10,20 +10,20 @@
             <tr>
                 <td>
                     <a href="{% url 'lakes-detail' reachcode=lake.reachcode %}">{{ lake }}</a> (<em>{{ lake.counties }}</em>)
-                    {% if lake.important_features %}
-                        {% if lake.important_features.has_aol_page %}
+                    {% if lake.is_important %}
+                        {% if lake.aol_page %}
                             <span class="glyphicon glyphicon-book has-tooltip" title="In original Atlas of Oregon Lakes"></span>
                         {% endif %} 
-                        {% if lake.important_features.has_photos %}
+                        {% if lake.has_photos %}
                             <span class="glyphicon glyphicon-camera has-tooltip" title="Photos available"></span>
                         {% endif %}
-                        {% if lake.important_features.has_docs %}
+                        {% if lake.has_docs %}
                             <span class="glyphicon glyphicon-file has-tooltip" title="Downloadable documents available"></span>
                         {% endif %}
-                        {% if lake.important_features.has_plants %}
+                        {% if lake.has_plants %}
                             <span class="glyphicon glyphicon-leaf has-tooltip" title="Plant data available"></span>
                         {% endif %}
-                        {% if lake.important_features.has_mussels %}
+                        {% if lake.has_mussels %}
                             <span class="glyphicon glyphicon-warning-sign has-tooltip" title="Mussel data available"></span>
                         {% endif %}
                     {% endif %}

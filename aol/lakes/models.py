@@ -32,23 +32,17 @@ class NHDLakeManager(models.Manager):
         which have the types 390, 436 in the NHD. See
         http://nhd.usgs.gov/NHDv2.0_poster_6_2_2010.pdf
 
-        We also only want to get lakes with counties specified since some NHD
-        lakes are outside Oregon
+        We also only want to get lakes in oregon
         """
-        sql = """
-            (SELECT 
-                lake_county.reachcode, 
-                array_to_string(array_agg(county.altname ORDER BY county.altname), ', ') AS counties
-            FROM lake_county INNER JOIN county USING(county_id)
-            GROUP BY lake_county.reachcode
-            ) counties
-        """
-        qs = super(NHDLakeManager, self).get_query_set().filter(ftype__in=[390, 436]).filter(parent=None)
-        #qs = qs.prefetch_related("county_set")
+        qs = super(NHDLakeManager, self).get_query_set().filter(
+            ftype__in=[390, 436],
+            parent=None,
+            is_in_oregon=True
+        )
+        qs = qs.prefetch_related("county_set")
         qs = qs.extra(
-            select={"counties": "counties.counties"},
-            tables=[sql],
-            where=["counties.reachcode = nhd.reachcode"]
+            select={"is_important": "has_mussels OR has_docs OR has_photos OR has_plants OR (aol_page IS NOT NULL)"},
+            order_by=['-is_important'],
         )
         return qs
 
@@ -67,59 +61,16 @@ class NHDLakeManager(models.Manager):
         return qs
 
     def by_letter(self, letter):
+        """Return a queryset of all the lakes that start with the letter"""
         letter = letter.lower()
-        if letter not in string.lowercase:
-            raise ArgumentError("We only accept ASCII letters here.")
         qs = self.all().extra(
             select={"alphabetic_title": "regexp_replace(COALESCE(NULLIF(title, ''), gnis_name), '^[lL]ake\s*', '')"},
             where=["(lower(COALESCE(NULLIF(title, ''), gnis_name)) LIKE %s OR lower(regexp_replace(COALESCE(NULLIF(title, ''), gnis_name), '^[lL]ake\s*', '')) LIKE %s )"],
             params=(letter + "%",)*2,
-            order_by=["alphabetic_title"],
+            # we want to list important lakes first, and then sort by the alphabetic title
+            order_by=['-is_important', "alphabetic_title"],
         )
         return qs
-
-    def important_lakes(self):
-        """
-        Returns a dict with a key for the reachcode, and a value of a dict with
-        keys indicating if the lake has_aol_page, has_docs, has_photos,
-        has_plants
-
-        Important lakes are ones that appear in the original AOL, or have
-        lake_plant, document, or photos attached to them. These lakes appear on
-        the alphabetical index of lakes on the site.
-        """
-        CACHE_KEY = "important_lakes"
-        CACHE_TIMEOUT = 60
-        if not cache.get(CACHE_KEY):
-            cursor = connection.cursor()
-            results = cursor.execute("""
-                SELECT 
-                    reachcode, 
-                    MAX(has_plants) AS has_plants, 
-                    MAX(has_docs) AS has_docs, 
-                    MAX(has_photos) AS has_photos, 
-                    MAX(has_aol_page) AS has_aol_page,
-                    MAX(has_mussels) AS has_mussels
-                FROM (
-                    -- get all reachcodes for lakes with plants
-                    SELECT reachcode, 1 AS has_plants, 0 AS has_docs, 0 AS has_photos, 0 AS has_aol_page, 0 AS has_mussels FROM "lake_plant" GROUP BY reachcode HAVING COUNT(*) >= 1
-                    UNION
-                    -- get all reachcodes for lakes with documents
-                    SELECT reachcode, 0 AS has_plants, 1 AS has_docs, 0 AS has_photos, 0 AS has_aol_page, 0 AS has_mussels FROM "document" GROUP BY reachcode HAVING COUNT(*) >= 1
-                    UNION
-                    -- get all reachcodes for lakes with photos
-                    SELECT reachcode, 0 AS has_plants, 0 AS has_docs, 1 AS has_photos, 0 AS has_aol_page, 0 AS has_mussels FROM "photo" GROUP BY reachcode HAVING COUNT(*) >= 1
-                    UNION
-                    -- get all original AOL lakes
-                    SELECT reachcode, 0 AS has_plants, 0 AS has_docs, 0 AS has_photos, 1 AS has_aol_page, 0 AS has_mussels FROM "nhd" WHERE aol_page IS NOT NULL
-                    UNION
-                    SELECT DISTINCT reachcode, 0 AS has_plants, 0 AS has_docs, 0 AS has_photos, 0 AS has_aol_page, 1 AS has_mussels FROM "display_view" INNER JOIN "lake_geom" ON ST_DWITHIN(ST_TRANSFORM(display_view.the_geom, 3644), lake_geom.the_geom, 10)
-                ) k
-                GROUP BY reachcode
-            """)
-            cache.set(CACHE_KEY, dict((r['reachcode'], r) for r in dictfetchall(cursor)), CACHE_TIMEOUT)
-
-        return cache.get(CACHE_KEY)
 
     def to_kml(self, scale, bbox):
         """
@@ -175,6 +126,18 @@ class NHDLake(models.Model):
     county_set = models.ManyToManyField('County', through="LakeCounty")
     plants = models.ManyToManyField('Plant', through="LakePlant")
 
+    # denormalized fields
+    # unfortunately, for performance reasons, we need to cache whether a lake
+    # has plant data, has mussels, was in the original AOL, has docs, has
+    # photos etc
+    has_mussels = models.BooleanField(default=False, blank=True)
+    has_plants = models.BooleanField(default=False, blank=True)
+    has_docs = models.BooleanField(default=False, blank=True)
+    has_photos = models.BooleanField(default=False, blank=True)
+    # some lakes in the NHD are not in oregon, so we cache this value so we
+    # don't have to join on the lake_county table
+    is_in_oregon = models.BooleanField(default=False, blank=True)
+
     objects = NHDLakeManager()
     unfiltered = models.Manager()
 
@@ -183,6 +146,56 @@ class NHDLake(models.Model):
 
     def __unicode__(self):
         return self.title or self.gnis_name or self.pk
+
+    @classmethod
+    def update_cached_fields(cls):
+        """
+        Important lakes are lakes with plant data, mussel data, photos docs, etc.
+        We cache these booleans (has_mussels, has_plants, etc) on the model
+        itself for performance reasons, so this class method needs to be called
+        to refresh thos booleans.
+
+        It also refreshes the is_in_oregon flag
+        """
+        cursor = connection.cursor()
+        results = cursor.execute("""
+            SELECT 
+                reachcode, 
+                MAX(has_plants) AS has_plants, 
+                MAX(has_docs) AS has_docs, 
+                MAX(has_photos) AS has_photos, 
+                MAX(has_aol_page) AS has_aol_page,
+                MAX(has_mussels) AS has_mussels
+            FROM (
+                -- get all reachcodes for lakes with plants
+                SELECT reachcode, 1 AS has_plants, 0 AS has_docs, 0 AS has_photos, 0 AS has_aol_page, 0 AS has_mussels FROM "lake_plant" GROUP BY reachcode HAVING COUNT(*) >= 1
+                UNION
+                -- get all reachcodes for lakes with documents
+                SELECT reachcode, 0 AS has_plants, 1 AS has_docs, 0 AS has_photos, 0 AS has_aol_page, 0 AS has_mussels FROM "document" GROUP BY reachcode HAVING COUNT(*) >= 1
+                UNION
+                -- get all reachcodes for lakes with photos
+                SELECT reachcode, 0 AS has_plants, 0 AS has_docs, 1 AS has_photos, 0 AS has_aol_page, 0 AS has_mussels FROM "photo" GROUP BY reachcode HAVING COUNT(*) >= 1
+                UNION
+                -- get all original AOL lakes
+                SELECT reachcode, 0 AS has_plants, 0 AS has_docs, 0 AS has_photos, 1 AS has_aol_page, 0 AS has_mussels FROM "nhd" WHERE aol_page IS NOT NULL
+                UNION
+                SELECT DISTINCT reachcode, 0 AS has_plants, 0 AS has_docs, 0 AS has_photos, 0 AS has_aol_page, 1 AS has_mussels FROM "display_view" INNER JOIN "lake_geom" ON ST_DWITHIN(ST_TRANSFORM(display_view.the_geom, 3644), lake_geom.the_geom, 10)
+            ) k
+            GROUP BY reachcode
+        """)
+        for row in dictfetchall(cursor):
+            NHDLake.unfiltered.filter(reachcode=row['reachcode']).update(
+                has_plants=row['has_plants'],
+                has_docs=row['has_docs'],
+                has_photos=row['has_photos'],
+                has_mussels=row['has_mussels']
+            )
+
+        # now update the is_in_oregon flag
+        cursor.execute("""
+            WITH foo AS (SELECT COUNT(*) AS the_count, reachcode FROM lake_county GROUP BY reachcode)
+            UPDATE nhd SET is_in_oregon = foo.the_count > 0 FROM foo WHERE foo.reachcode = nhd.reachcode
+        """)
 
     @property
     def area(self):

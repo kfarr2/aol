@@ -18,15 +18,9 @@ def listing(request, letter=None):
 
     if letter is not None:
         letter = letter.upper()
-        lakes = list(NHDLake.objects.by_letter(letter=letter))
-        important_lakes = NHDLake.objects.important_lakes()
-
-        # mark up the lake objects with their important_lake infomation
-        for lake in lakes:
-            lake.important_features = important_lakes.get(lake.pk, {})
-
-        # we want to make important lakes float to the top
-        lakes.sort(key=lambda l: -1 if l.important_features else 0)
+        # defering the body field since it is unneeded and adds 100ms to the
+        # page latency
+        lakes = NHDLake.objects.by_letter(letter=letter).defer("body")
 
         paginator = Paginator(lakes, 100)
         page = request.GET.get('page')
@@ -41,8 +35,8 @@ def listing(request, letter=None):
 
         # unfortunately, we have to create two iterables to simplify the template logic
         # one is for important lakes, the other is not non important lakes
-        important_lakes = [l for l in lakes if l.important_features]
-        non_important_lakes = [l for l in lakes if not l.important_features]
+        important_lakes = [l for l in lakes if l.is_important]
+        non_important_lakes = [l for l in lakes if not l.is_important]
 
     return render(request, "lakes/listing.html", {
         "letters": string.ascii_uppercase,
