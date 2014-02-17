@@ -50,6 +50,7 @@ $(document).ready(function(){
         control.unselectAll();
     });
 
+
     // render a popup window when a facility is clicked
     var popup = null;
     layers.facilities_kml.events.register("featureselected", layers.facilities_kml, function(event){
@@ -69,6 +70,22 @@ $(document).ready(function(){
                 control.unselectAll();
             }
         ));
+    });
+
+    // If we don't preload the facility HTML on the page, when the balloon
+    // window pops up, the facility image throws off the openlayers balloon
+    // height calculatation (because it is calculated *before* the image height
+    // is known)...so a scrollbar appears in the balloon. We don't want that,
+    // so we preload all the HTML
+    layers.facilities_kml.events.register("loadend", layers.facilities_kml, function(event){
+        // remove all the existing preloaded stuff, since it's no longer relevent
+        $('.preloaded-facility').remove()
+        // for each feature, create a hidden div on the page that renders the
+        // HTML (thus loading the image)
+        for(var i = 0; i < this.features.length; i++){
+            var data = this.features[i].data;
+            $('body').append($('<div class="preloaded-facility"></div>').append(data.description).hide())
+        }
     });
 
     // zoom the map
