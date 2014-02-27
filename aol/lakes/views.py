@@ -52,7 +52,8 @@ def detail(request, reachcode, template=None):
     photos = [p for p in Photo.objects.filter(lake=lake) if p.exists()]
     documents = Document.objects.filter(lake=lake).exclude(type=Document.MAP)
     maps = list(Document.objects.filter(lake=lake, type=Document.MAP))
-    lake_plants = LakePlant.objects.filter(lake=lake).select_related("plant")
+    # the distinct clause with the listed fields is Postgres specific
+    lake_plants = LakePlant.objects.filter(lake=lake).select_related("plant").distinct("plant__common_name", "plant__name", "observation_date")
     return render(request, template or "lakes/detail.html", {
         "lake": lake,
         "photos": photos,
@@ -69,11 +70,6 @@ def search(request):
             reachcode = lakes[0].reachcode
             return HttpResponseRedirect(reverse('lakes-detail', kwargs={'reachcode':reachcode}))
 
-        important_lakes = NHDLake.objects.important_lakes()
-        # mark up the lake objects with their important_lake infomation
-        for lake in lakes:
-            lake.important_features = important_lakes.get(lake.pk, {})
-  
     return render(request, "lakes/results.html", {
         'lakes': lakes, 
         'query':q,

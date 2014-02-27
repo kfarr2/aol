@@ -454,11 +454,17 @@ class County(models.Model):
 
 class Plant(models.Model):
     name = models.CharField(max_length=255, primary_key=True)
-    common_name = models.CharField(max_length=255) # Common name of the plant
+    common_name = models.CharField(max_length=255)
     noxious_weed_designation = models.CharField(max_length=255, default="", choices=(
         ("", ""),
-        ("A", "A"),
-        ("B", "B"),
+        ("A", "ODA Class A"),
+        ("B", "ODA Class B"),
+        ("Federal", "Federal"),
+    ))
+    is_native = models.NullBooleanField(default=None, choices=(
+        (True, "Native"),
+        (False, "Non-native"),
+        (None, ""),
     ))
 
     class Meta:
@@ -471,7 +477,7 @@ class Plant(models.Model):
 class LakePlant(models.Model):
     lake_plant_id = models.AutoField(primary_key=True)
     lake = models.ForeignKey(NHDLake, db_column="reachcode")
-    plant = models.ForeignKey("Plant")
+    plant = models.ForeignKey("Plant", related_name="plant_set")
     observation_date = models.DateField(null=True)
     source = models.CharField(max_length=255, default="", choices=(
         ("", ""),
@@ -482,6 +488,12 @@ class LakePlant(models.Model):
 
     class Meta:
         db_table = "lake_plant"
-        ordering = ['observation_date']
+        ordering = ['-observation_date']
+
+    def source_link(self):
+        return {
+            "CLR": "http://www.clr.pdx.edu/",
+            "IMAP": "http://www.imapinvasives.org",
+        }.get(self.source, '#')
 
 

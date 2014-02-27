@@ -18,9 +18,10 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         if len(args) == 0:
-            raise CommandError("Pass me the shapefile path")
+            raise CommandError("Pass me the path to the plant data CSV")
 
-        LakePlant.objects.all().delete()
+        # delete all CLR lake_plant objects, since we just replace everything
+        LakePlant.objects.filter(source="CLR").delete()
 
         with open(args[0], 'r') as csv_file:
             reader = csv.reader(csv_file)
@@ -31,6 +32,7 @@ class Command(BaseCommand):
                     continue
                 # break the row into a dict based on the header
                 row = dict((k, v) for k, v in zip(header, row))
+                # we only care about rows with a reachcode
                 if not row['ReachCode']:
                     continue
 
@@ -52,6 +54,7 @@ class Command(BaseCommand):
                     name=row['ScientificName'],
                     common_name=row['CommonName'],
                     noxious_weed_designation=row['NoxiousWeedDesignation'],
+                    is_native=row['NativeSpecies'] == "1",
                 ).save()
 
                 try:
