@@ -1,7 +1,7 @@
 <ul class='nav nav-tabs'>
     <li class="active"><a data-toggle="tab" title='maps' href='#maps'>Maps</a></li>
     <li><a data-toggle="tab" title='plants' href='#plants'>Plants</a></li>
-    <li><a data-toggle="tab" title='mussels' href='#mussels'>Mussels</a></li>
+    <li><a data-toggle="tab" title='mussels' href='#mussels'>Molluscs</a></li>
     <li><a data-toggle="tab" title='other-information' href='#other-information'>Documents</a></li>
     <li><a data-toggle="tab" title='photos' href='#photos'>Photos</a></li>
 </ul>
@@ -82,6 +82,7 @@
                     <tr>
                         <th>Date</th>
                         <th>Species</th>
+                        <th>Status</th>
                         <th>Source</th>
                     </tr>
                 </thead>
@@ -90,7 +91,8 @@
                         <tr>
                             <td class="nowrap">{{ lake_plant.observation_date|default:"-" }}</td>
                             <td>{{ lake_plant.plant.name }} ({{ lake_plant.plant.common_name }})</td>
-                            <td>CLR</td>
+                            <td>{{ lake_plant.plant.get_is_native_display }} {{ lake_plant.plant.get_noxious_weed_designation_display }}</td>
+                            <td><a href="{{ lake_plant.source_link }}" class="has-tooltip" title="{{ lake_plant.get_source_display }}">{{ lake_plant.source }}</a></td>
                         </tr>
                     {% endfor %}
                 </tbody>
