@@ -32,7 +32,22 @@ class Command(BaseCommand):
                     continue
                 # break the row into a dict based on the header
                 row = dict((k, v) for k, v in zip(header, row))
-                # we only care about rows with a reachcode
+
+                # create or update the plant 
+                try:
+                    plant = Plant.objects.get(normalized_name=row['ScientificName'].lower())
+                except Plant.DoesNotExist:
+                    plant = Plant()
+
+                plant.name = row['ScientificName']
+                plant.normalized_name = row['ScientificName'].lower()
+                plant.common_name = row['CommonName']
+                plant.noxious_weed_designation = row['NoxiousWeedDesignation']
+                plant.is_native = row['NativeSpecies'] == "1"
+                plant.save()
+
+
+                # if we don't have a reachcode, there is nothing else to do
                 if not row['ReachCode']:
                     continue
 
@@ -48,19 +63,6 @@ class Command(BaseCommand):
                 except NHDLake.DoesNotExist as e:
                     print("Lake with reachcode = %s not found" % str(row['ReachCode']), file=sys.stderr)
                     continue
-
-                # create or update the plant 
-                try:
-                    plant = Plant.objects.get(normalized_name=row['ScientificName'].lower())
-                except Plant.DoesNotExist:
-                    plant = Plant()
-
-                plant.name = row['ScientificName']
-                plant.normalized_name = row['ScientificName'].lower()
-                plant.common_name = row['CommonName']
-                plant.noxious_weed_designation = row['NoxiousWeedDesignation']
-                plant.is_native = row['NativeSpecies'] == "1"
-                plant.save()
 
                 try:
                     observation_date = datetime.datetime.strptime(row['ObsDate'], "%m/%d/%Y %H:%M:%S")
