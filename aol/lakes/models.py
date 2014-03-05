@@ -17,6 +17,9 @@ from django.contrib.gis.geos import Point
 _quote_name_unless_alias = SQLCompiler.quote_name_unless_alias
 SQLCompiler.quote_name_unless_alias = lambda self, name: name if name.strip().startswith('(') else _quote_name_unless_alias(self, name)
 
+# this is the distance we use to calculate if a mussel observation is near a lake
+DISTANCE_FROM_ITEM = 10 # feet since the projection 3644 is in feet
+
 def dictfetchall(cursor):
     "Returns all rows from a cursor as a dict"
     desc = cursor.description
@@ -179,10 +182,10 @@ class NHDLake(models.Model):
                 -- get all original AOL lakes
                 SELECT reachcode, 0 AS has_plants, 0 AS has_docs, 0 AS has_photos, 1 AS has_aol_page, 0 AS has_mussels FROM "nhd" WHERE aol_page IS NOT NULL
                 UNION
-                SELECT DISTINCT reachcode, 0 AS has_plants, 0 AS has_docs, 0 AS has_photos, 0 AS has_aol_page, 1 AS has_mussels FROM "display_view" INNER JOIN "lake_geom" ON ST_DWITHIN(ST_TRANSFORM(display_view.the_geom, 3644), lake_geom.the_geom, 10)
+                SELECT DISTINCT reachcode, 0 AS has_plants, 0 AS has_docs, 0 AS has_photos, 0 AS has_aol_page, 1 AS has_mussels FROM mussels.observation INNER JOIN "lake_geom" ON (ST_BUFFER(ST_TRANSFORM(observation.the_geom, 3644), %s) && lake_geom.the_geom)
             ) k
             GROUP BY reachcode
-        """)
+        """, [DISTANCE_FROM_ITEM])
         for row in dictfetchall(cursor):
             NHDLake.unfiltered.filter(reachcode=row['reachcode']).update(
                 has_plants=row['has_plants'],
@@ -295,20 +298,23 @@ class NHDLake(models.Model):
         status of the mussels
         """
         if not hasattr(self, "_mussels"):
-            distance = 10 # in meters since the 3644 projection is in meters
             cursor = connection.cursor()
             cursor.execute("""
                 SELECT 
                     DISTINCT
-                    status as species,
+                    specie.name as species,
                     date_checked,
-                    agency
+                    agency.name as agency
                 FROM 
-                    display_view 
+                    mussels.observation
+                INNER JOIN
+                    mussels.specie USING(specie_id)
+                INNER JOIN
+                    mussels.agency USING(agency_id)
                 WHERE 
-                    ST_DWITHIN(ST_TRANSFORM(the_geom, 3644), (SELECT the_geom FROM lake_geom WHERE reachcode = %s), %s)
-                ORDER BY date_checked
-            """, (self.pk, distance))
+                    ST_BUFFER(ST_TRANSFORM(the_geom, 3644), %s) && (SELECT the_geom FROM lake_geom WHERE reachcode = %s)
+                ORDER BY date_checked DESC
+            """, (DISTANCE_FROM_ITEM, self.pk))
             results = []
             for row in cursor:
                 results.append({
