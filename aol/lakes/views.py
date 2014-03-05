@@ -1,6 +1,8 @@
+import csv
 import string
 from django.http import HttpResponse, HttpResponseRedirect
-from django.core.urlresolvers import reverse 
+from django.core.urlresolvers import reverse
+from django.template.defaultfilters import slugify
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
 from django.views.decorators.cache import cache_page
@@ -75,4 +77,38 @@ def search(request):
         'query':q,
     })
 
+def plants_csv(request, reachcode):
+    """
+    Export the plant data for a lake as a CSV
+    """
+    lake = get_object_or_404(NHDLake, reachcode=reachcode)
+    lake_plants = LakePlant.objects.filter(lake=lake).select_related("plant")
+    response = HttpResponse("", content_type="text/csv")
+    response['content-disposition'] = "attachment; filename=%s" % (slugify(str(lake)) + ".csv")
+    writer = csv.writer(response)
+    writer.writerow([
+        "Reachcode",
+        "Lake Name",
+        "Observation Date",
+        "Plant Name",
+        "Plant Common Name",
+        "Noxious Weed Designation",
+        "Is Native",
+        "Source",
+        "Survey Organization",
+    ])
+    for lake_plant in lake_plants:
+        writer.writerow([
+            str(lake.pk),
+            str(lake),
+            lake_plant.observation_date,
+            lake_plant.plant.name,
+            lake_plant.plant.common_name,
+            lake_plant.plant.noxious_weed_designation,
+            lake_plant.plant.is_native,
+            lake_plant.source,
+            lake_plant.survey_org
+        ])
+
+    return response
 

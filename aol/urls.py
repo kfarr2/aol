@@ -19,6 +19,7 @@ urlpatterns = patterns('',
     url(r'^lakes/?$', lakes.listing, name='lakes-listing'),
     url(r'^lakes/(?P<letter>[a-z])/?$', lakes.listing, name='lakes-listing'),
     url(r'^lakes/(?P<reachcode>.+)?$', lakes.detail, name='lakes-detail'),
+    url(r'^plants/csv/(?P<reachcode>.+)?$', lakes.plants_csv, name='plants-csv'),
 
     url(r'^map/?$', maps.home, name='map'),
     url(r'^map/search/?$', maps.search, name='map-search'),
