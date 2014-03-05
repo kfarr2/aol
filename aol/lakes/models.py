@@ -68,8 +68,14 @@ class NHDLakeManager(models.Manager):
         letter = letter.lower()
         qs = self.all().extra(
             select={"alphabetic_title": "regexp_replace(COALESCE(NULLIF(title, ''), gnis_name), '^[lL]ake\s*', '')"},
-            where=["(lower(COALESCE(NULLIF(title, ''), gnis_name)) LIKE %s OR lower(regexp_replace(COALESCE(NULLIF(title, ''), gnis_name), '^[lL]ake\s*', '')) LIKE %s )"],
-            params=(letter + "%",)*2,
+            where=["""
+                (
+                    substring(lower(COALESCE(NULLIF(title, ''), gnis_name)) FROM 1 for 1) = %s
+                    OR 
+                    substring(lower(regexp_replace(COALESCE(NULLIF(title, ''), gnis_name), '^[lL]ake\s*', '')) FROM 1 for 1) = %s
+                )
+            """],
+            params=(letter,)*2,
             # we want to list important lakes first, and then sort by the alphabetic title
             order_by=['-is_important', "alphabetic_title"],
         )

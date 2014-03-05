@@ -39,3 +39,10 @@ This allows you to do intersection queries like:
 
 with *very* good performance. The magic '10' is arbitrary, but you should keep
 this consistent with DISTANCE_FROM_ITEM in lakes.models.
+
+Another set of good indices to have is:
+
+    CREATE INDEX lake_title_prefix_1 ON nhd USING BTREE(substring(lower(COALESCE(NULLIF(title, ''), gnis_name)) FROM 1 for 1));
+    CREATE INDEX lake_title_prefix_2 ON nhd USING BTREE(substring(lower(regexp_replace(COALESCE(NULLIF(title, ''), gnis_name), '^[lL]ake\s*', '')) FROM 1 for 1));
+
+This helps make the alphabetic listing pages load really quickly. 
