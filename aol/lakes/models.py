@@ -453,7 +453,10 @@ class County(models.Model):
 
 
 class Plant(models.Model):
-    name = models.CharField(max_length=255, primary_key=True)
+    plant_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255)
+    # the name of the plant in lower case
+    normalized_name = models.CharField(max_length=255, unique=True)
     common_name = models.CharField(max_length=255) # Common name of the plant
     noxious_weed_designation = models.CharField(max_length=255, default="", choices=(
         ("", ""),

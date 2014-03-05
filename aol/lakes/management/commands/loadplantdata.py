@@ -48,11 +48,16 @@ class Command(BaseCommand):
                     continue
 
                 # create or update the plant 
-                Plant(
-                    name=row['ScientificName'],
-                    common_name=row['CommonName'],
-                    noxious_weed_designation=row['NoxiousWeedDesignation'],
-                ).save()
+                try:
+                    plant = Plant.objects.get(normalized_name=row['ScientificName'].lower())
+                except Plant.DoesNotExist:
+                    plant = Plant()
+
+                plant.name = row['ScientificName']
+                plant.normalized_name = row['ScientificName'].lower()
+                plant.common_name = row['CommonName']
+                plant.noxious_weed_designation = row['NoxiousWeedDesignation']
+                plant.save()
 
                 try:
                     observation_date = datetime.datetime.strptime(row['ObsDate'], "%m/%d/%Y %H:%M:%S")
@@ -61,7 +66,7 @@ class Command(BaseCommand):
 
                 LakePlant(
                     lake_id=row['ReachCode'],
-                    plant_id=row['ScientificName'],
+                    plant=plant,
                     observation_date=observation_date,
                     source="CLR",
                     survey_org=row['SurveyOrg']
