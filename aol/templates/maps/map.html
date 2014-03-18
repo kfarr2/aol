@@ -77,6 +77,21 @@ $(document).ready(function(){
         $(this).hide();
     });
 
+    // when a user clicks on one of the layer buttons
+    $('#layer-selector button').on('click', function(){
+        // toggle the base layer
+        $('#layer-selector button').removeClass("active");
+        $(this).addClass("active");
+        // find the layer that was clicked (based on the data-layer attribute,
+        // and the OpenLayer layer's name)
+        for(var i = 0; i < MAP.layers.length; i++){
+            if(MAP.layers[i].name == $(this).data("layer")){
+                MAP.setBaseLayer(MAP.layers[i]);
+                break;
+            }
+        }
+    })
+
     // if there is a query parameter specifying the reachcode, click that lake
     if($.url().param("reachcode")){
         $('#map').trigger("lake:selected", {feature: {attributes: {id: $.url().param("reachcode")}}});
@@ -89,6 +104,11 @@ $(document).ready(function(){
     <li><a data-toggle="tab" href="#info-panel-search" class="tab">Search</a></li>
     <li><a data-toggle="tab" href="#info-panel-lake" class="tab">Lake</a></li>
 </ul>
+
+<div id="layer-selector" class="btn-group btn-group-sm">
+    <button class="btn btn-default active" data-layer="Naturalistic">Naturalistic</button>
+    <button class="btn btn-default" data-layer="Ownership">Ownership</button>
+</div>
 
 
 <div id="map"></div>

@@ -2,7 +2,38 @@ var layers = (function(){
     // at the end of this closure we return an object containing all the layers
 
     // base layer for the map
-    var base_layer = new OpenLayers.Layer.XYZ("Naturalistic", "http://gis.rc.pdx.edu/arcgis/rest/services/aol/nlcd/MapServer/tile/${z}/${y}/${x}", {
+    var natural_layer = new OpenLayers.Layer.XYZ("Naturalistic", "http://gis.rc.pdx.edu/arcgis/rest/services/aol/nlcd/MapServer/tile/${z}/${y}/${x}", {
+        sphericalMercator: false,
+        transitionEffect: 'resize',
+        tileOrigin: new OpenLayers.LonLat(-300000, 2763954),
+        format: "jpg",
+        isBaseLayer: true,
+        // this layer requires a custom function to retrieve the correct tile
+        // from the tile server
+        getURL: function(bounds){
+            // constructs the proper URL for the tile img
+            var res = this.map.getResolution();
+            var x = Math.round((bounds.left - this.tileOrigin.lon) / (res * this.tileSize.w));
+            var y = Math.round((this.tileOrigin.lat - bounds.top) / (res * this.tileSize.h));
+            var z = this.map.getZoom();
+
+            if ( ( x < 0 ) || ( y < 0 ) || ( z < 0 ) ) {
+                return null;
+            }
+
+            var url = this.url;
+            var s = '' + x + y + z;
+            if ( url instanceof Array ) {
+                url = this.selectUrl(s, url);
+            }
+
+            var path = OpenLayers.String.format(url, {'x': x, 'y': y, 'z': z});
+
+            return path;
+        }
+    });
+
+    var ownership_layer = new OpenLayers.Layer.XYZ("Ownership", "http://gis.rc.pdx.edu/arcgis/rest/services/aol/ownership/MapServer/tile/${z}/${y}/${x}", {
         sphericalMercator: false,
         transitionEffect: 'resize',
         tileOrigin: new OpenLayers.LonLat(-300000, 2763954),
@@ -88,5 +119,5 @@ var layers = (function(){
     facilities_kml_layer.initResolutions = lakes_kml_layer.initResolutions
 
     // return all the layers with friendly names
-    return {base: base_layer, lakes_kml: lakes_kml_layer, facilities_kml: facilities_kml_layer}
+    return {natural_layer: natural_layer, ownership_layer: ownership_layer, lakes_kml: lakes_kml_layer, facilities_kml: facilities_kml_layer}
 })()

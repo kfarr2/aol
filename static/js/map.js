@@ -18,7 +18,8 @@ $(document).ready(function(){
     // create the map, add the layers, and zoom to the initial location
     var map = new OpenLayers.Map('map', map_options);
     MAP = map;
-    map.addLayer(layers.base);
+    map.addLayer(layers.natural_layer);
+    map.addLayer(layers.ownership_layer);
     map.addLayer(layers.lakes_kml);
     map.addLayer(layers.facilities_kml);
     // when the map is moved update the kml layers since it lazily fetches

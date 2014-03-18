@@ -40,6 +40,16 @@
     text-shadow: black 0.1em 0.1em 0.2em
 }
 
+#layer-selector {
+    position: absolute;
+    left: 70%;
+    z-index: 5;
+    margin-left: -200px;
+    width: 200px;
+    box-sizing: border-box;
+    top: 10px;
+}
+
 #pull-out-tabs {
     position: absolute;
     left: 70%;
