@@ -356,10 +356,10 @@ class LakeGeom(models.Model):
                 UPDATE 
                     nhd 
                 SET 
-                    fishing_zone_id = (SELECT fishing_zone_id FROM fishing_zone WHERE ST_Intersects(fishing_zone.the_geom, nhd.the_geom) LIMIT 1)
+                    fishing_zone_id = (SELECT fishing_zone_id FROM fishing_zone WHERE ST_Intersects(fishing_zone.the_geom, (SELECT the_geom FROM lake_geom WHERE reachcode = %s)) LIMIT 1)
                 WHERE 
                     nhd.reachcode = %s
-                """, (self.pk,))
+                """, (self.pk, self.pk))
             # update the huc6
             cursor.execute("""
                 WITH foo AS (
