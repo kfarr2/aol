@@ -17,7 +17,6 @@ class Command(BaseCommand):
             raise CommandError("Pass me the shapefile path")
 
         print "Assuming shapefile uses srid/epsg 4269!" 
-        import pdb; pdb.set_trace()
 
         # read the shapefile
         sf = shapefile.Reader(args[0])
@@ -98,3 +97,8 @@ class Command(BaseCommand):
                     ).save()
 
             cursor.execute("ALTER TABLE nhd ENABLE TRIGGER USER")
+            # we only care about preserving the topology on the geom for the most zoomed in level
+            cursor.execute("UPDATE lake_geom SET the_geom_27k = ST_MULTI(st_simplifypreservetopology(the_geom, 121.5))")
+            cursor.execute("UPDATE  lake_geom SET the_geom_54k = ST_MULTI(st_simplify(the_geom, 242))")
+            cursor.execute("UPDATE lake_geom SET the_geom_108k = ST_MULTI(st_simplify(the_geom, 610))")
+            cursor.execute("UPDATE lake_geom SET the_geom_217k = ST_MULTI(st_simplify(the_geom, 1220))")
