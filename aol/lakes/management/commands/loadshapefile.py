@@ -17,6 +17,7 @@ class Command(BaseCommand):
             raise CommandError("Pass me the shapefile path")
 
         print "Assuming shapefile uses srid/epsg 4269!" 
+        import pdb; pdb.set_trace()
 
         # read the shapefile
         sf = shapefile.Reader(args[0])
@@ -46,13 +47,13 @@ class Command(BaseCommand):
 
             for shape, record in itertools.izip(sf.iterShapes(), sf.iterRecords()):
                 # make it so we can index by column name instead of column position
-                record = dict((field_description[0], field_value) for field_description, field_value in zip(fields, record))
-                if record['ReachCode'].strip() == "":
-                    print "Skipping lake with no reachcode and permanent_id=%s" % record['Permanent_'].strip()
+                record = dict((field_description[0].upper(), field_value) for field_description, field_value in zip(fields, record))
+                if record['REACHCODE'].strip() == "":
+                    print "Skipping lake with no reachcode and permanent_id=%s" % record['PERMANENT_'].strip()
 
                 # fetch the existing hstore for the lake, which tells us when
                 # each column was modified
-                cursor.execute("""SELECT changed_on FROM nhd WHERE reachcode = %s""", (record['ReachCode'],))
+                cursor.execute("""SELECT changed_on FROM nhd WHERE reachcode = %s""", (record['REACHCODE'],))
                 row = cursor.fetchone()
                 if row is not None:
                     # remove any fields that have been modified outside of the
@@ -66,22 +67,22 @@ class Command(BaseCommand):
                     update_fields = None
 
                 NHDLake(
-                    reachcode=record['ReachCode'].strip(),
-                    permanent_id=record['Permanent_'].strip(),
-                    fdate=datetime.date(*record['FDate']),
-                    ftype=record['FType'],
-                    fcode=record['FCode'],
-                    shape_length=float(record['Shape_Leng']),
-                    shape_area=float(record['Shape_Area']),
-                    resolution=record['Resolution'],
+                    reachcode=record['REACHCODE'].strip(),
+                    permanent_id=record['PERMANENT_'].strip(),
+                    fdate=datetime.date(*record['FDATE']),
+                    ftype=record['FTYPE'],
+                    fcode=record['FCODE'],
+                    shape_length=float(record['SHAPE_LENG']),
+                    shape_area=float(record['SHAPE_AREA']),
+                    resolution=record['RESOLUTION'],
                     gnis_id=record['GNIS_ID'].strip(),
-                    gnis_name=record['GNIS_Name'].strip(),
-                    area_sq_km=float(record['AreaSqKm']),
-                    elevation=float(record['Elevation'])
+                    gnis_name=record['GNIS_NAME'].strip(),
+                    area_sq_km=float(record['AREASQKM']),
+                    elevation=float(record['ELEVATION'])
                 ).save(update_fields=update_fields)
 
                 # only change the geom if it has been changed already
-                if "the_geom" not in modified_fields:
+                if "THE_GEOM" not in modified_fields:
                     # this stupid pyshp library has no way to spit out the wkt
                     # which is what GEOSGeometry needs, so we have to rely on
                     # another library to do the conversion
@@ -92,7 +93,7 @@ class Command(BaseCommand):
                     geom.transform(3644) # transform to the proper epsg code
                     # update the Geometry
                     LakeGeom(
-                        reachcode=record['ReachCode'].strip(),
+                        reachcode_id=record['REACHCODE'].strip(),
                         the_geom=geom
                     ).save()
 
