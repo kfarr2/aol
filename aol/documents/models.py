@@ -21,7 +21,7 @@ class Document(models.Model):
         (OTHER, "Other"),
         (MAP, "Map"),
     ), help_text="Map documents will appear on the 'Maps' tab on the lake page")
-    friendly_filename = models.CharField(max_length=255, blank=True)
+    friendly_filename = models.CharField(max_length=255, blank=True, help_text="When this document is downloaded, this will be the filename (if blank, it will default to the document's original filename)")
 
     lake = models.ForeignKey(NHDLake, db_column="reachcode")
 
