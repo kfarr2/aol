@@ -26,5 +26,14 @@ class LakeForm(forms.ModelForm):
 class FlatPageForm(FPF, DeletableModelForm):
     class Meta(FPF.Meta):
         widgets = {
-            "content": forms.widgets.Textarea(attrs={"class": "ckeditor"})
+            "content": forms.widgets.Textarea(attrs={"class": "ckeditor"}),
         }
+
+        fields = (
+            "url",
+            "title",
+            "content",
+            "template_name",
+            "sites",
+        )
+
