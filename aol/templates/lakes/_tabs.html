@@ -106,11 +106,15 @@
     </div>
 
     <div class='tab-pane' id='other-information'>
-        {% if documents %}
+        {% if documents or lake.fishing_zone %}
             <ul>
                 {% for doc in documents %}
                     <li><a href="{{ doc.url }}">{{ doc.name }}</a></li>
                 {% endfor %}
+
+                {% if lake.fishing_zone %}
+                    <li><a target="_blank" href="{{ lake.fishing_zone.get_absolute_url }}">ODFW Fishing Report: {{ lake.fishing_zone }}</a></li>
+                {% endif %}
             </ul>
         {% else %}
             <div class="alert alert-warning">No documents available.</div>

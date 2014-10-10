@@ -430,7 +430,10 @@ class FishingZone(models.Model):
         db_table = "fishing_zone"
 
     def __unicode__(self):
-        return self.odfw
+        return self.odfw.capitalize()
+
+    def get_absolute_url(self):
+        return "http://www.dfw.state.or.us/rr/%s/index.asp" % self.odfw.lower()
 
 
 class HUC6(models.Model): 
