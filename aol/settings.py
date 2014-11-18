@@ -1,9 +1,10 @@
-import os
+import os, sys
 from fnmatch import fnmatch
+from varlet import variable
 
 # Django settings for aol project.
 here = lambda *path: os.path.normpath(os.path.join(os.path.dirname(__file__), *path))
-ROOT = lambda *path: here("../../", *path)
+ROOT = lambda *path: here("../", *path)
 
 TEST_RUNNER = 'aol.testrunner.AOLRunner'
 
@@ -121,7 +122,7 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    here("../", "templates"),
+    here("templates"),
 )
 
 INSTALLED_APPS = (
@@ -177,4 +178,40 @@ LOGGING = {
         },
     }
 }
+
+# For some reason we can't have a "POSTGIS_VERSION" variable since that
+# interferes with something else, so I added a "YOUR_" prefix.
+YOUR_POSTGIS_VERSION = 2
+
+DEBUG = variable("DEBUG", True)
+TEMPLATE_DEBUG = DEBUG
+
+ADMINS = (
+    # ('Your Name', 'your_email@example.com'),
+)
+
+MANAGERS = ADMINS
+
+DATABASES = {
+    'default': {
+        'ENGINE': variable("DB_ENGINE", 'django.contrib.gis.db.backends.postgis'), # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': variable("DB_NAME", ''),                      # Or path to database file if using sqlite3.
+        # The following settings are not used with sqlite3:
+        'USER': variable("DB_USER", ''),
+        'PASSWORD': variable("DB_PASS", ''),
+        'HOST': variable("DB_HOST", ''),                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
+        'PORT': variable("DB_PORT", ''),                      # Set to empty string for default.
+        'OPTIONS': {
+            'options': '-c search_path=public'
+        }
+    }
+}
+
+# specify the test user for the db
+if 'test' in sys.argv:
+    DATABASES['default']['USER'] = 'super'
+    DATABASES['default']['PASSWORD'] = 'user'
+
+# Make this unique, and don't share it with anybody.
+SECRET_KEY = variable("SECRET_KEY", os.urandom(64).decode("latin1"))
 
