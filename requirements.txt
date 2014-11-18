@@ -1,9 +1,9 @@
-Django==1.6.1
-Pillow==2.1.0
-psycopg2==2.5.1
-pytz==2013d
-wsgiref==0.1.2
-https://github.com/PSU-OIT-ARC/djangocas/archive/master.zip
+Django<1.8
+Pillow==2.6.1
+py-postgresql
+pytz
+-e git://github.com/PSU-OIT-ARC/djangocas.git#egg=djangocas
 Shapely==1.3.0
+varlet
 pyshp
 requests
