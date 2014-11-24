@@ -162,7 +162,6 @@ INSTALLED_APPS = (
     'arcutils',
     'aol.users',
     'aol.lakes',
-    'aol.utils',
     'aol.documents',
     'aol.photos',
     'aol.facilities',

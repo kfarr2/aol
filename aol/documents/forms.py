@@ -1,7 +1,7 @@
 import datetime
 from django import forms
 from django.db.models import Max
-from aol.utils.forms import DeletableModelForm
+from aol.forms import DeletableModelForm
 from .models import Document
 
 class DocumentForm(DeletableModelForm):
