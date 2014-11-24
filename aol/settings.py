@@ -1,10 +1,11 @@
 import os
 from fnmatch import fnmatch
 from spatial_generators import MOMMY_SPATIAL_FIELDS
+from varlet import variable
 
 # Django settings for aol project.
 here = lambda *path: os.path.normpath(os.path.join(os.path.dirname(__file__), *path))
-ROOT = lambda *path: here("../../", *path)
+ROOT = lambda *path: here("../", *path)
 
 TEST_RUNNER = 'aol.testrunner.AOLRunner'
 
@@ -14,6 +15,31 @@ LOGIN_URL = '/admin/login'
 LOGOUT_URL = '/admin/logout'
 LOGIN_REDIRECT_URL = '/admin'
 CAS_SERVER_URL = 'https://sso.pdx.edu/cas/login'
+
+DEBUG = variable("DEBUG", default=False)
+TEMPLATE_DEBUG = DEBUG
+# ('Your Name', 'your_email@example.com'),
+ADMINS = variable("ADMINS", [])
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        # database name
+        'NAME': variable("DB_NAME", default='aol'),
+        # database user. Ensure this user has the createdb privilege if you
+        # want to run tests
+        'USER': variable("DB_USER", default='root'),
+        'PASSWORD': variable("DB_PASSWORD", default='vagrant'),
+        # the empty string will default to the DB specific default
+        'HOST': variable("DB_HOST", default=""),
+        'PORT': '',
+        'OPTIONS': {
+            'options': '-c search_path=public'
+        }
+    }
+}
+
+SECRET_KEY = variable("SECRET_KEY", default=os.urandom(64).decode("latin1"))
 
 MOMMY_CUSTOM_FIELDS_GEN = MOMMY_SPATIAL_FIELDS
 
@@ -122,7 +148,7 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    here("../", "templates"),
+    here("templates"),
 )
 
 INSTALLED_APPS = (
@@ -133,6 +159,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.flatpages',
     #'debug_toolbar',
+    'arcutils',
     'aol.users',
     'aol.lakes',
     'aol.utils',
@@ -150,32 +177,7 @@ AUTHENTICATION_BACKENDS = (
     'djangocas.backends.CASBackend',
 )
 
-# A sample logging configuration. The only tangible logging
-# performed by this configuration is to send an email to
-# the site admins on every HTTP 500 error when DEBUG=False.
-# See http://docs.djangoproject.com/en/dev/topics/logging for
-# more details on how to customize your logging configuration.
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        }
-    },
-    'handlers': {
-        'mail_admins': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler'
-        }
-    },
-    'loggers': {
-        'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-    }
-}
+# The HOST:PORT of the logstash server you want to pipe logs to
+LOGSTASH_ADDRESS = variable("LOGSTASH_ADDRESS", "localhost:5000")
 
+LOGGING_CONFIG = 'arcutils.logging.basic'

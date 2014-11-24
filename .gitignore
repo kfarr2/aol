@@ -6,3 +6,4 @@ aol/settings/local.py
 media/*
 *.sql
 plant_data.txt
+/variables.py
