@@ -7,3 +7,4 @@ media/*
 *.sql
 plant_data.txt
 /variables.py
+/static
