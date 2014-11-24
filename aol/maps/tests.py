@@ -1,7 +1,9 @@
+from unittest.mock import Mock, patch
+from model_mommy.mommy import make
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.contrib.gis.geos import GEOSGeometry
-from aol.lakes.models import NHDLake
+from aol.lakes.models import NHDLake, LakeGeom
 from aol.facilities.models import Facility
 
 class HomeTest(TestCase):
@@ -13,12 +15,11 @@ class HomeTest(TestCase):
 
 
 class LakesTest(TestCase):
-    fixtures = ['lakes.json']
-
     def test_load(self):
-        response = self.client.get(reverse("lakes-kml")+"?bbox_limited=-50000,-50000,50000,50000&scale=54000")
-        self.assertTrue(response.status_code, 200)
-        self.assertIn("Matt Lake", response.content)
+        with patch("aol.lakes.models.NHDLake.objects.to_kml", lambda *args, **kwargs: [Mock(title="Matt Lake")]):
+            response = self.client.get(reverse("lakes-kml")+"?bbox_limited=-50000,-50000,50000,50000&scale=54000")
+            self.assertTrue(response.status_code, 200)
+            self.assertIn("Matt Lake", response.content.decode("utf8"))
 
 
 class FacilitiesTest(TestCase):
@@ -56,7 +57,7 @@ class FacilitiesTest(TestCase):
     def test_load(self):
         response = self.client.get(reverse("facilities-kml")+"?bbox_limited=-50000,-50000,50000,50000&scale=54000")
         self.assertTrue(response.status_code, 200)
-        self.assertIn("foo", response.content)
+        self.assertIn("foo", response.content.decode("utf8"))
 
 
 class PanelTest(TestCase):
@@ -68,10 +69,10 @@ class PanelTest(TestCase):
 
 
 class SearchTest(TestCase):
-    fixtures = ['lakes.json']
-
     def test_load(self):
+        lake = make(NHDLake, title="Matt Lake", ftype=390, is_in_oregon=True)
+        make(LakeGeom, reachcode=lake)
         response = self.client.get(reverse("map-search")+"?query=matt")
         self.assertTrue(response.status_code, 200)
         # Matt lake should be in the results
-        self.assertIn("Matt", response.content)
+        self.assertIn("Matt", response.content.decode())

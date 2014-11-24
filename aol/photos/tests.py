@@ -1,25 +1,27 @@
 import os
+from unittest.mock import Mock
+from model_mommy.mommy import make
+from model_mommy.generators import gen_image_field
 from django.test import TestCase
 from django.conf import settings as SETTINGS
 from django.core.urlresolvers import reverse
+from django.utils.timezone import now
 from .models import Photo
 from aol.lakes.models import NHDLake as Lake
 from aol.users.tests.test_views import LoginMixin
 
 class ModelTest(TestCase):
-    fixtures = ['lakes.json']
-
     def test_url(self):
         # make sure the URL path is valid
-        photo = Photo.objects.get(pk=1)
-        self.assertEqual(photo.url, "/media/photos/test.jpg")
+        photo = make(Photo, pk=1, file=gen_image_field())
+        self.assertEqual(photo.url, "/media/photos/%s" % os.path.basename(photo.file.name))
 
     def test_thumbnail_url(self):
-        photo = Photo.objects.get(pk=1)
+        photo = make(Photo, pk=1, file=gen_image_field())
 
         # delete the thumbnail file
-        thumb_path = SETTINGS.ROOT('media', 'photos', 'thumbnail-test.jpg')
-        thumb_url = "/media/photos/thumbnail-test.jpg"
+        thumb_path = SETTINGS.ROOT('media', 'photos', 'thumbnail-%s' % os.path.basename(photo.file.name))
+        thumb_url = "/media/photos/thumbnail-%s" % os.path.basename(photo.file.name)
         try:
             os.remove(thumb_path)
         except OSError:
@@ -50,9 +52,8 @@ class ModelTest(TestCase):
             pass
 
 class ViewTest(LoginMixin):
-    fixtures = ['lakes.json']
-
     def test_add_photo(self):
+        make(Lake, title="Matt Lake", ftype=390, is_in_oregon=True)
         lake = Lake.objects.get(title="Matt Lake")
         response = self.client.get(reverse('admin-add-photo', args=(lake.pk,)))
         self.assertEqual(response.status_code, 200)
@@ -61,7 +62,7 @@ class ViewTest(LoginMixin):
         data = {
             'caption': 'foo',
             'author': 'bar',
-            'file': open(os.path.join(SETTINGS.MEDIA_ROOT, "photos", "test.jpg")),
+            'file': open(os.path.join(SETTINGS.MEDIA_ROOT, "photos", "test.jpg"), "rb"),
             'taken_on': '2012-12-12',
         }
         pre_count = Photo.objects.filter(lake=lake).count()
@@ -77,6 +78,7 @@ class ViewTest(LoginMixin):
         self.assertFalse(response.context['form'].is_valid())
 
     def test_edit_photo(self):
+        photo = make(Photo, pk=1, taken_on=now())
         photo = Photo.objects.get(pk=1)
         response = self.client.get(reverse('admin-edit-photo', args=(photo.pk,)))
         self.assertEqual(response.status_code, 200)

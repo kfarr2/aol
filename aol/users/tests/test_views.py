@@ -1,10 +1,11 @@
 import os
+from model_mommy.mommy import make
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django.conf import settings as SETTINGS
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
-from aol.lakes.models import NHDLake as Lake
+from aol.lakes.models import NHDLake as Lake, LakeGeom
 from ..models import User
 
 class LoginMixin(TestCase):
@@ -18,17 +19,17 @@ class LoginMixin(TestCase):
 
 
 class AdminTest(LoginMixin):
-    fixtures = ['lakes.json']
-
     # just make sure the views return a 200
     def test_listing(self):
+        lake = make(Lake, title="Matt Lake", ftype=390, is_in_oregon=True)
+        make(LakeGeom, reachcode=lake)
         response = self.client.get(reverse('admin-listing'))
         self.assertEqual(response.status_code, 200)
 
         # test a search
         response = self.client.get(reverse('admin-listing')+"?q=matt")
         self.assertEqual(response.status_code, 200)
-        self.assertIn("Matt", response.content)
+        self.assertIn("Matt", response.content.decode())
 
     def test_add_and_edit_flatpage(self):
         # try adding a page
@@ -55,6 +56,7 @@ class AdminTest(LoginMixin):
         self.assertRedirects(response, reverse("admin-listing"))
 
     def test_edit_lake(self):
+        make(Lake, title="Matt Lake", ftype=390, is_in_oregon=True, aol_page=5)
         lake = Lake.objects.get(title="Matt Lake")
         response = self.client.get(reverse('admin-edit-lake', args=(lake.pk,)))
         self.assertEqual(response.status_code, 200)

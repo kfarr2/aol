@@ -1,5 +1,6 @@
 import os
 from fnmatch import fnmatch
+from spatial_generators import MOMMY_SPATIAL_FIELDS
 
 # Django settings for aol project.
 here = lambda *path: os.path.normpath(os.path.join(os.path.dirname(__file__), *path))
@@ -14,11 +15,11 @@ LOGOUT_URL = '/admin/logout'
 LOGIN_REDIRECT_URL = '/admin'
 CAS_SERVER_URL = 'https://sso.pdx.edu/cas/login'
 
+MOMMY_CUSTOM_FIELDS_GEN = MOMMY_SPATIAL_FIELDS
+
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = ['.pdx.edu']
-
-POSTGIS_TEMPLATE = 'postgis_template'
 
 # with a trailing slash
 TILE_URL = "http://gis.rc.pdx.edu/arcgis/rest/services/aol/nlcd/MapServer/"

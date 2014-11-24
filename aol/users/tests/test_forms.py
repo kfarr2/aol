@@ -1,3 +1,4 @@
+from model_mommy.mommy import make
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from aol.lakes.models import NHDLake as Lake
@@ -8,9 +9,8 @@ from aol.photos.models import Photo
 from aol.photos.forms import PhotoForm
 
 class LakeFormTest(TestCase):
-    fixtures = ['lakes.json']
-
     def test_form(self):
+        lake = make(Lake, title="Matt Lake", ftype=390, parent=None, is_in_oregon=True)
         lake = Lake.objects.get(title="Matt Lake")
         data = {
             "title": lake.title,
@@ -18,8 +18,6 @@ class LakeFormTest(TestCase):
             "gnis_id": lake.gnis_id,
             "gnis_name": lake.gnis_name,
             "reachcode": lake.reachcode,
-            "fishing_zone": lake.fishing_zone.pk,
-            "huc6": lake.huc6.pk,
         }
 
         form = LakeForm(data, instance=lake)
@@ -27,6 +25,8 @@ class LakeFormTest(TestCase):
         form.save()
 
     def test_deletable_model_form(self):
+        lake = make(Lake, title="Matt Lake", ftype=390, parent=None, is_in_oregon=True)
+        make(Photo, lake=lake)
         # this tests the DeletableModelForm by testing PhotoForm (which subclasses it)
         lake = Lake.objects.get(title="Matt Lake")
         photo = Photo.objects.filter(lake=lake)[0]

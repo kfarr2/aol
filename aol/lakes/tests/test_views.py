@@ -1,10 +1,10 @@
+from model_mommy.mommy import make
+from unittest.mock import Mock, patch
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from ..models import NHDLake as Lake
+from ..models import NHDLake as Lake, LakeGeom
 
 class LakesTest(TestCase):
-    fixtures = ['lakes.json']
-
     def test_listing(self):
         """Make sure the listing page works"""
         response = self.client.get(reverse('lakes-listing'))
@@ -16,6 +16,8 @@ class LakesTest(TestCase):
 
     def test_detail(self):
         """Make sure the lake detail page loads"""
+        lake = make(Lake, reachcode="123", title="Matt Lake", ftype=390, is_in_oregon=True)
+        make(LakeGeom, reachcode=lake)
         response = self.client.get(reverse('lakes-detail', args=(123,)))
         self.assertEqual(response.status_code, 200)
 

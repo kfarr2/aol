@@ -1,21 +1,12 @@
 import string
-import requests
-import os
 import re
 from django.conf import settings as SETTINGS
 from django.contrib.gis.db import models
 from django.db.models import Q
-from django.db.models.sql.compiler import SQLCompiler
 from django.db import connections, transaction, connection
 from django.contrib.gis.gdal import SpatialReference, CoordTransform
 from django.core.cache import cache
 from django.contrib.gis.geos import Point
-
-# This monkey patch allows us to write subqueries in the `tables` argument to the
-# QuerySet.extra method. For example Foo.objects.all().extra(tables=["(SELECT * FROM Bar) t"])
-# See: http://djangosnippets.org/snippets/236/#c3754
-_quote_name_unless_alias = SQLCompiler.quote_name_unless_alias
-SQLCompiler.quote_name_unless_alias = lambda self, name: name if name.strip().startswith('(') else _quote_name_unless_alias(self, name)
 
 # this is the distance we use to calculate if a mussel observation is near a lake
 DISTANCE_FROM_ITEM = 10 # feet since the projection 3644 is in feet
@@ -29,7 +20,7 @@ def dictfetchall(cursor):
     ]
 
 class NHDLakeManager(models.Manager):
-    def get_query_set(self):
+    def get_queryset(self):
         """
         We only want to return lakes that are coded as LakePond or Reservoir
         which have the types 390, 436 in the NHD. See
@@ -37,7 +28,7 @@ class NHDLakeManager(models.Manager):
 
         We also only want to get lakes in oregon
         """
-        qs = super(NHDLakeManager, self).get_query_set().filter(
+        qs = super(NHDLakeManager, self).get_queryset().filter(
             ftype__in=[390, 436],
             parent=None,
             is_in_oregon=True
@@ -56,7 +47,7 @@ class NHDLakeManager(models.Manager):
         """
         qs = NHDLake.objects.filter(Q(gnis_name__icontains=query) | Q(title__icontains=query) | Q(gnis_id__icontains=query) | Q(reachcode__icontains=query))
         qs = qs.extra(
-            tables=["(SELECT reachcode, the_geom FROM lake_geom) AS lake_geom"],
+            tables=["lake_geom"],
             select={"lake_area": "ST_AREA(lake_geom.the_geom)"}, 
             order_by=["-lake_area"],
             where=["lake_geom.reachcode = nhd.reachcode"]
@@ -100,7 +91,7 @@ class NHDLakeManager(models.Manager):
 
         qs = self.all().extra(
             select={'kml': 'st_askml(lake_geom.%s)' % (geom_col)},
-            tables=["(SELECT * FROM lake_geom) AS lake_geom"],
+            tables=["lake_geom"],
             where=[
                 "lake_geom.reachcode = nhd.reachcode",
                 "lake_geom.the_geom && st_setsrid(st_makebox2d(st_point(%s, %s), st_point(%s, %s)), 3644)",
@@ -153,7 +144,7 @@ class NHDLake(models.Model):
     class Meta:
         db_table = 'nhd'
 
-    def __unicode__(self):
+    def __str__(self):
         return self.title or self.gnis_name or self.pk
 
     @classmethod
@@ -238,7 +229,7 @@ class NHDLake(models.Model):
     def counties(self):
         """Return a nice comma separated list of the counties this lake belongs to"""
         if not hasattr(self, "_counties"):
-            self._counties = ",".join(c.name for c in self.county_set.all())
+            self._counties = ", ".join(c.name for c in self.county_set.all())
         return self._counties
 
     @counties.setter
@@ -414,8 +405,8 @@ class DeferGeomManager(models.Manager):
     is necessary because the geom columns are huge, and rarely need to be
     accessed.
     """
-    def get_query_set(self, *args, **kwargs):
-        qs = super(DeferGeomManager, self).get_query_set(*args, **kwargs).defer("the_geom")
+    def get_queryset(self, *args, **kwargs):
+        qs = super(DeferGeomManager, self).get_queryset(*args, **kwargs).defer("the_geom")
         return qs
 
 
@@ -429,7 +420,7 @@ class FishingZone(models.Model):
     class Meta:
         db_table = "fishing_zone"
 
-    def __unicode__(self):
+    def __str__(self):
         return self.odfw.capitalize()
 
     def get_absolute_url(self):
@@ -446,7 +437,7 @@ class HUC6(models.Model):
     class Meta:
         db_table = "huc6"
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
@@ -463,7 +454,7 @@ class County(models.Model):
         db_table = "county"
         ordering = ["name"]
 
-    def __unicode__(self):
+    def __str__(self):
         return self.full_name
 
 
@@ -488,7 +479,7 @@ class Plant(models.Model):
     class Meta:
         db_table = "plant"
     
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
