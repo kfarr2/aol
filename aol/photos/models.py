@@ -4,13 +4,17 @@ from django.contrib.gis.db import models
 from aol.lakes.models import NHDLake
 from PIL import Image
 
+# this can't be a lambda because of Django migrations
+def upload_to(instance, filename):
+    return instance.PHOTO_DIR + filename
+
 class Photo(models.Model):
     """Stores all the photos attached to a lake"""
     PHOTO_DIR = "photos/"
     THUMBNAIL_PREFIX = "thumbnail-"
 
     photo_id = models.AutoField(primary_key=True)
-    file = models.FileField(upload_to=lambda instance, filename: instance.PHOTO_DIR + filename, db_column="filename")
+    file = models.FileField(upload_to=upload_to, db_column="filename")
     taken_on = models.DateField(null=True, db_column="photo_date", blank=True)
     author = models.CharField(max_length=255, blank=True)
     caption = models.CharField(max_length=255, blank=True)

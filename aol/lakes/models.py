@@ -104,6 +104,10 @@ class NHDLakeManager(models.Manager):
 
 
 class NHDLake(models.Model):
+    # FYI: We add an hstore field (called changed_on) in a migration that tracks
+    # when each field was updated (which is triggered with a trigger -- also
+    # defined in a migration)
+
     reachcode = models.CharField(max_length=32, primary_key=True)
     title = models.CharField(max_length=255, blank=True)
     permanent_id = models.CharField(max_length=64)
