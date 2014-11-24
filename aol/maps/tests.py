@@ -7,8 +7,6 @@ from aol.lakes.models import NHDLake, LakeGeom
 from aol.facilities.models import Facility
 
 class HomeTest(TestCase):
-    fixtures = ['lakes.json']
-
     def test_load(self):
         response = self.client.get(reverse("map"))
         self.assertTrue(response.status_code, 200)
@@ -23,8 +21,6 @@ class LakesTest(TestCase):
 
 
 class FacilitiesTest(TestCase):
-    fixtures = ['lakes.json']
-
     def setUp(self):
         super(FacilitiesTest, self).setUp()
         self.f = Facility(
@@ -61,10 +57,10 @@ class FacilitiesTest(TestCase):
 
 
 class PanelTest(TestCase):
-    fixtures = ['lakes.json']
-
     def test_load(self):
-        response = self.client.get(reverse("lakes-panel", args=(123,)))
+        lake = make(NHDLake, title="Matt Lake", ftype=390, is_in_oregon=True)
+        make(LakeGeom, reachcode=lake)
+        response = self.client.get(reverse("lakes-panel", args=(lake.pk,)))
         self.assertTrue(response.status_code, 200)
 
 
