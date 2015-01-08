@@ -9,5 +9,5 @@ requests
 mock
 model_mommy
 mommy_spatial_generators
-git://github.com/PSU-OIT-ARC/django-arcutils.git#egg=django-arcutils[logging]
+git+https://github.com/PSU-OIT-ARC/django-arcutils.git#egg=django-arcutils[logging]
 varlet
