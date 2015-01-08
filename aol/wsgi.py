@@ -1,18 +1,3 @@
-"""
-WSGI config for aol project.
-
-This module contains the WSGI application used by Django's development server
-and any production WSGI deployments. It should expose a module-level variable
-named ``application``. Django's ``runserver`` and ``runfcgi`` commands discover
-this application via the ``WSGI_APPLICATION`` setting.
-
-Usually you will have the standard Django WSGI application here, but it also
-might make sense to replace the whole Django WSGI application with a custom one
-that later delegates to the Django one. For example, you could introduce WSGI
-middleware here, or combine a Django application with an application of another
-framework.
-
-"""
 import os
 import site
 import sys
@@ -20,8 +5,9 @@ import sys
 prev_sys_path = list(sys.path)
 root = os.path.normpath(os.path.join(os.path.dirname(__file__), "../"))
 sys.path.append(root)
-site.addsitedir(os.path.join(root, ".env/lib/python2.6/site-packages"))
+site.addsitedir(os.path.join(root, ".env/lib/python%d.%d/site-packages" % sys.version_info[:2]))
 
+site.addsitedir(os.path.join(root, ".env/lib64/python%d.%d/site-packages" % sys.version_info[:2]))
 # addsitedir adds its directories at the end, but we want our local stuff
 # to take precedence over system-installed packages.
 # See http://code.google.com/p/modwsgi/issues/detail?id=112
@@ -32,11 +18,9 @@ for item in list(sys.path):
     sys.path.remove(item)
 sys.path[:0] = new_sys_path
 
-# We defer to a DJANGO_SETTINGS_MODULE already in the environment. This breaks
-# if running multiple sites in the same mod_wsgi process. To fix this, use
-# mod_wsgi daemon mode with each site in its own daemon process, or use
-# os.environ["DJANGO_SETTINGS_MODULE"] = "aol.settings"
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "aol.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", os.path.basename(os.path.dirname(__file__)) + ".settings")
+
+print(os.environ["DJANGO_SETTINGS_MODULE"])
 
 # This application object is used by any WSGI server configured to use this
 # file. This includes Django's development server, if the WSGI_APPLICATION
