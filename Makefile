@@ -1,9 +1,7 @@
-.PHONY: run clean install deploy prod dev
+.PHONY: run clean reload init
 
 DEFAULT_DB_NAME=aol
 WSGI_PATH=aol/wsgi.py
-GIT_REMOTE=git@github.com:PSU-OIT-ARC/aol.git
-GIT_REMOTE_HTTPS=https://github.com/PSU-OIT-ARC/aol.git
 
 
 PYTHON=python3
@@ -19,12 +17,14 @@ clean:
 	find . -iname "*.pyo" -delete
 	find . -iname "__pycache__" -delete
 
-deploy: .env
+reload: .env
 	python manage.py migrate
 	python manage.py collectstatic --noinput
 	touch $(WSGI_PATH)
 
-install: .env
+init:
+	rm -rf .env
+	$(MAKE) .env
 	psql postgres -c "CREATE DATABASE $(DEFAULT_DB_NAME);"
 	psql $(DEFAULT_DB_NAME) -c "CREATE EXTENSION postgis;"
 	python manage.py migrate

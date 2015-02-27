@@ -2,7 +2,7 @@
 
 ## Install
 
-    make install
+    make init
     copy all the data from AOL prod to your DB
 
 
