@@ -1,6 +1,6 @@
 import os
 from fnmatch import fnmatch
-from spatial_generators import MOMMY_SPATIAL_FIELDS
+from mommy_spatial_generators import MOMMY_SPATIAL_FIELDS
 from varlet import variable
 
 # Django settings for aol project.
