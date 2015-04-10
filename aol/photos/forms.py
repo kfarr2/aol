@@ -1,5 +1,5 @@
 from django import forms
-from aol.utils.forms import DeletableModelForm
+from aol.forms import DeletableModelForm
 from .models import Photo
 
 class PhotoForm(DeletableModelForm):

@@ -1,9 +1,11 @@
 import os
 from fnmatch import fnmatch
+from mommy_spatial_generators import MOMMY_SPATIAL_FIELDS
+from varlet import variable
 
 # Django settings for aol project.
 here = lambda *path: os.path.normpath(os.path.join(os.path.dirname(__file__), *path))
-ROOT = lambda *path: here("../../", *path)
+ROOT = lambda *path: here("../", *path)
 
 TEST_RUNNER = 'aol.testrunner.AOLRunner'
 
@@ -14,11 +16,36 @@ LOGOUT_URL = '/admin/logout'
 LOGIN_REDIRECT_URL = '/admin'
 CAS_SERVER_URL = 'https://sso.pdx.edu/cas/login'
 
+DEBUG = variable("DEBUG", default=False)
+TEMPLATE_DEBUG = DEBUG
+# ('Your Name', 'your_email@example.com'),
+ADMINS = variable("ADMINS", [])
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        # database name
+        'NAME': variable("DB_NAME", default='aol'),
+        # database user. Ensure this user has the createdb privilege if you
+        # want to run tests
+        'USER': variable("DB_USER", default='root'),
+        'PASSWORD': variable("DB_PASSWORD", default='vagrant'),
+        # the empty string will default to the DB specific default
+        'HOST': variable("DB_HOST", default=""),
+        'PORT': '',
+        'OPTIONS': {
+            'options': '-c search_path=public'
+        }
+    }
+}
+
+SECRET_KEY = variable("SECRET_KEY", default=os.urandom(64).decode("latin1"))
+
+MOMMY_CUSTOM_FIELDS_GEN = MOMMY_SPATIAL_FIELDS
+
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = ['.pdx.edu']
-
-POSTGIS_TEMPLATE = 'postgis_template'
 
 # with a trailing slash
 TILE_URL = "http://gis.rc.pdx.edu/arcgis/rest/services/aol/nlcd/MapServer/"
@@ -71,7 +98,7 @@ MEDIA_URL = '/media/'
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/var/www/example.com/static/"
-STATIC_ROOT = ''
+STATIC_ROOT = ROOT("static")
 
 # URL prefix for static files.
 # Example: "http://example.com/static/", "http://static.example.com/"
@@ -82,7 +109,7 @@ STATICFILES_DIRS = (
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    ROOT("static"),
+    here("static"),
 )
 
 # List of finder classes that know how to find static files in
@@ -121,7 +148,7 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    here("../", "templates"),
+    here("templates"),
 )
 
 INSTALLED_APPS = (
@@ -132,9 +159,9 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.flatpages',
     #'debug_toolbar',
+    'arcutils',
     'aol.users',
     'aol.lakes',
-    'aol.utils',
     'aol.documents',
     'aol.photos',
     'aol.facilities',
@@ -149,32 +176,7 @@ AUTHENTICATION_BACKENDS = (
     'djangocas.backends.CASBackend',
 )
 
-# A sample logging configuration. The only tangible logging
-# performed by this configuration is to send an email to
-# the site admins on every HTTP 500 error when DEBUG=False.
-# See http://docs.djangoproject.com/en/dev/topics/logging for
-# more details on how to customize your logging configuration.
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        }
-    },
-    'handlers': {
-        'mail_admins': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler'
-        }
-    },
-    'loggers': {
-        'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-    }
-}
+# The HOST:PORT of the logstash server you want to pipe logs to
+LOGSTASH_ADDRESS = variable("LOGSTASH_ADDRESS", "localhost:5000")
 
+LOGGING_CONFIG = 'arcutils.logging.basic'

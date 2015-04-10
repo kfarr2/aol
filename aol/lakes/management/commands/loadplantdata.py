@@ -1,3 +1,18 @@
+"""
+Call this command like ./manage.py loadplantdata path/to/csv.csv
+
+The CSV should be of the for
+
+    WaterbodyName,ScientificName,CommonName,NativeSpecies,NoxiousWeedDesignation,ObsDate,SurveyOrg,ReachCode,Lat_DD,Lon_DD
+    Timothy Lake,Potamogeton alpinus,red pondweed,1,,8/17/2004 0:00,PSUCLR,17090011000850,45.14,-121.76
+    ...
+
+The first row is assumed to be the column headers. Order of the columns doesn't matter.
+
+The required columns are ScientificName, CommonName, NoxiousWeedDesignation,
+NativeSpecies, ObsDate, and Reachcode. We always assume the plant data source
+is "CLR" (other plant data comes from iMapInvasives
+"""
 from __future__ import print_function
 import sys
 from shapely.geometry import asShape
@@ -65,7 +80,7 @@ class Command(BaseCommand):
                     continue
 
                 try:
-                    observation_date = datetime.datetime.strptime(row['ObsDate'], "%m/%d/%Y %H:%M:%S")
+                    observation_date = datetime.datetime.strptime(row['ObsDate'].split(" ")[0], "%m/%d/%Y")
                 except ValueError:
                     observation_date = None
 
@@ -76,3 +91,6 @@ class Command(BaseCommand):
                     source="CLR",
                     survey_org=row['SurveyOrg']
                 ).save()
+
+        # this causes the has_plants cached field to be updated
+        NHDLake.update_cached_fields()

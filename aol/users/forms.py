@@ -4,7 +4,7 @@ from django.db.models import Max
 from django.db import transaction
 from django.utils.translation import ugettext as _
 from django.contrib.flatpages.forms import FlatpageForm as FPF
-from aol.utils.forms import DeletableModelForm
+from aol.forms import DeletableModelForm
 from aol.lakes.models import NHDLake, LakeCounty, Plant, LakePlant
 
 class LakeForm(forms.ModelForm):

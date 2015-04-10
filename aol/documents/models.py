@@ -2,6 +2,10 @@ from django.core.urlresolvers import reverse
 from django.contrib.gis.db import models
 from aol.lakes.models import NHDLake
 
+# this can't be lambda because of Django migrations
+def upload_to(instance, filename):
+    return instance.DOCUMENT_DIR + filename
+
 class Document(models.Model):
     """
     Stores all the documents attached to a lake like PDFs, and whatever else an
@@ -14,7 +18,7 @@ class Document(models.Model):
 
     document_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
-    file = models.FileField(upload_to=lambda instance, filename: instance.DOCUMENT_DIR + filename)
+    file = models.FileField(upload_to=upload_to)
     rank = models.IntegerField(verbose_name="Weight", help_text="Defines the order in which items are listed.")
     uploaded_on = models.DateTimeField(auto_now_add=True)
     type = models.IntegerField(choices=(

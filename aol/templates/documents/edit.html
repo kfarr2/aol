@@ -3,7 +3,7 @@
 <h2>Add/Edit Document</h2>
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    {% include "_form.html" %}
+    {{ form|bootstrap }}
     <input type="submit" name="submit" value="submit" />
 </form>
 

@@ -5,8 +5,6 @@ from django.conf import settings as SETTINGS
 from aol.lakes.models import NHDLake
 
 class FacilityManagerTest(TestCase):
-    fixtures = ['lakes.json']
-
     def setUp(self):
         super(FacilityManagerTest, self).setUp()
         self.f = Facility(

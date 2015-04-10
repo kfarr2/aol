@@ -1,15 +1,17 @@
 import os
+from model_mommy.mommy import make
+from unittest.mock import Mock, patch
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django.conf import settings as SETTINGS
 from .models import Document
 from aol.users.tests.test_views import LoginMixin
-from aol.lakes.models import NHDLake as Lake
+from aol.lakes.models import NHDLake as Lake, LakeGeom
 
 class ViewTest(LoginMixin):
-    fixtures = ['lakes.json']
-
     def test_add_document(self):
+        lake = make(Lake, title="Matt Lake", is_in_oregon=True, ftype=390)
+        make(LakeGeom, reachcode=lake)
         lake = Lake.objects.get(title="Matt Lake")
         response = self.client.get(reverse('admin-add-document', args=(lake.pk,)))
         self.assertEqual(response.status_code, 200)
@@ -18,7 +20,7 @@ class ViewTest(LoginMixin):
         data = {
             'name': 'foo',
             'rank': '1',
-            'file': open(os.path.join(SETTINGS.MEDIA_ROOT, "photos", "test.jpg")),
+            'file': open(os.path.join(SETTINGS.MEDIA_ROOT, "photos", "test.jpg"), "rb"),
             'type': Document.OTHER,
         }
         pre_count = Document.objects.filter(lake=lake).count()
@@ -34,7 +36,7 @@ class ViewTest(LoginMixin):
         self.assertFalse(response.context['form'].is_valid())
 
     def test_edit_document(self):
-        document = Document.objects.get(pk=1)
+        document = make(Document)
         response = self.client.get(reverse('admin-edit-document', args=(document.pk,)))
         self.assertEqual(response.status_code, 200)
 
@@ -46,6 +48,6 @@ class ViewTest(LoginMixin):
         self.assertEqual(response.status_code, 302)
 
         # make sure the caption got updated
-        document = Document.objects.get(pk=1)
+        document = Document.objects.get(pk=document.pk)
         self.assertEqual(document.name, data['name'])
 
